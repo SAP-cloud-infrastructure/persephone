@@ -1,0 +1,97 @@
+metadata:
+  url: https://github.com/sap-cloud-infrastructure/persephone
+
+binaries:
+  # we want scikube to be the release binary
+  - name: scikube
+    fromPackage: ./cmd/scikube
+    installTo: bin/
+  - name: persephone-operator
+    fromPackage: ./cmd/persephone-operator
+    installTo: bin/
+  - name: persephone-webhook
+    fromPackage: ./cmd/persephone-webhook
+    installTo: bin/
+  - name: persephone-liquid-apiserver
+    fromPackage: ./cmd/persephone-liquid-apiserver
+    installTo: bin/
+  - name: persephone-audit-webhook
+    fromPackage: ./cmd/persephone-audit-webhook
+    installTo: bin/
+
+controllerGen:
+  enabled: false
+
+  # TODO: is this necessary? if so then why only persephone-webhook is defined?
+dockerfile:
+  enabled: true
+  entrypoint: [ "/usr/bin/persephone-webhook" ]
+  extraIgnores:
+    - /_scratch
+  useBuildKit: true
+
+githubWorkflow:
+  global:
+    defaultBranch: main
+  ci:
+    enabled: true
+    ignorePaths: []
+
+golang:
+  autoupdateDependencies:
+    enabled: true
+    matchModule: ^github.com/(?:sapcc|sap-cloud-infrastructure)/
+  enableVendoring: false
+  setGoModVersion: true
+
+golangciLint:
+  createConfig: true
+  timeout: 8m
+
+goReleaser:
+  createConfig: true
+
+nix:
+  extraPackages:
+    - kind
+    - kustomize
+    - openssl
+    - setup-envtest # not using controllerGen.enable as that turns on controller-gen
+    - skaffold
+
+renovate:
+  enabled: true
+
+reuse:
+  annotations:
+  - SPDX-FileCopyrightText: SAP SE or an SAP affiliate company and Gardener contributors
+    SPDX-License-Identifier: Apache-2.0
+    paths:
+    - internal/webhook/add.go
+    - internal/webhook/config/config.go
+    - internal/webhook/shootadmission/add.go
+    - internal/webhook/token/add.go
+    - test/integration/webhook/token/token_suite_test.go
+    - test/integration/webhook/token/token_test.go
+  - SPDX-FileCopyrightText: SAP SE or an SAP affiliate company
+    SPDX-License-Identifier: Apache-2.0
+    paths:
+    - docs/*.png
+
+shellCheck:
+  ignorePaths:
+    - _scratch/*
+  opts: '--external-sources'
+
+testPackages:
+  except: test/integration
+
+typos:
+  extendWords:
+    Hashi: Hashi
+
+verbatim: |
+  check: test-integration
+  test-integration: FORCE
+    @printf "\e[1;36m>> Running integration tests\e[0m\n"
+    ./hack/test-integration.sh ./test/integration/...
