@@ -4,14 +4,15 @@
 version: 2
 
 archives:
-  - name_template: '{{ .ProjectName }}-{{ replace .Version "v" "" }}-{{ .Os }}-{{ .Arch }}'
+  - name_template: 'scikube-{{ replace .Version "v" "" }}-{{ .Os }}-{{ .Arch }}'
     format_overrides:
       - goos: windows
         formats: [ zip ]
     files:
-      - CHANGELOG.md
+      - LICENSES/**
       - LICENSE
       - README.md
+      - CHANGELOG.md
 
 builds:
   - binary: 'scikube'

@@ -36,6 +36,12 @@ githubWorkflow:
   ci:
     enabled: true
     ignorePaths: []
+  release:
+    enabled: true
+  license:
+    enabled: true
+  securityChecks:
+    enabled: true
 
 golang:
   autoupdateDependencies:
@@ -50,6 +56,9 @@ golangciLint:
 
 goReleaser:
   createConfig: true
+  files: [ LICENSES/**, LICENSE, README.md, CHANGELOG.md ]
+  binaryName: scikube
+  nameTemplate: 'scikube-{{ replace .Version "v" "" }}-{{ .Os }}-{{ .Arch }}'
 
 nix:
   extraPackages:
