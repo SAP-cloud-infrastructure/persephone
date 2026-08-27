@@ -70,8 +70,7 @@ func TestAuthCmd_FailsIfKeystoneAuthFails(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected `authenticate()` to fail")
 	}
-	var customErr *keystoneAuthError
-	if !errors.As(err, &customErr) {
+	if typedErr, ok := errors.AsType[*keystoneAuthError](err); !ok || typedErr == nil {
 		t.Fatalf("expected `authenticate()` to fail due to Keystone auth failure; actual error = %s", err)
 	}
 }

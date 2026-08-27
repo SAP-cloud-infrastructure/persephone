@@ -162,7 +162,7 @@ func (l *Logic) SetQuota(ctx context.Context, projectUUID string, req liquid.Ser
 			rq.Spec.Hard = make(corev1.ResourceList)
 		}
 		quota := min(quotaReq.Quota, math.MaxInt64)
-		rq.Spec.Hard[constants.ShootResourceQuotaKey] = *resource.NewQuantity(int64(quota), resource.DecimalSI) //nolint:gosec // quota values from Limes are always within int64 range
+		rq.Spec.Hard[constants.ShootResourceQuotaKey] = *resource.NewQuantity(int64(quota), resource.DecimalSI)
 		return nil
 	})
 	if err != nil {

@@ -91,8 +91,7 @@ func TestFileStorageExecCredentialCache_Read_FailsIfExpiredToken(t *testing.T) {
 		t.Error("expected loading to fail")
 		t.FailNow()
 	}
-	var customErr *ExpiredCachedExecCredentialError
-	if !errors.As(err, &customErr) {
+	if typedErr, ok := errors.AsType[*ExpiredCachedExecCredentialError](err); !ok || typedErr == nil {
 		t.Errorf("expected loading to fail due to cached token having expired; actual error = %s", err)
 		t.FailNow()
 	}
@@ -122,8 +121,7 @@ func TestFileStorageExecCredentialCache_Read_FailsIfInvalidJSON(t *testing.T) {
 		t.Error("expected loading to fail")
 		t.FailNow()
 	}
-	var customErr *invalidCachedExecCredentialError
-	if !errors.As(err, &customErr) {
+	if typedErr, ok := errors.AsType[*invalidCachedExecCredentialError](err); !ok || typedErr == nil {
 		t.Errorf("expected loading to fail at unmarshalling step; actual error = %s", err)
 		t.FailNow()
 	}
@@ -143,8 +141,7 @@ func TestFileStorageExecCredentialCache_Read_FailsIfUnsafePermissions(t *testing
 		t.Error("expected loading to fail")
 		t.FailNow()
 	}
-	var customErr *unsafeCachedExecCredentialError
-	if !errors.As(err, &customErr) {
+	if typedErr, ok := errors.AsType[*unsafeCachedExecCredentialError](err); !ok || typedErr == nil {
 		t.Errorf("expected loading to fail due to unsafe permissions; actual error = %s", err)
 		t.FailNow()
 	}

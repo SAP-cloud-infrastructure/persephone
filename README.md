@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025 SAP SE or an SAP affiliate company
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP-cloud-infrastructure/persephone)](https://api.reuse.software/info/github.com/SAP-cloud-infrastructure/persephone)
 
 # Project Persephone

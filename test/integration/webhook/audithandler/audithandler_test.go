@@ -567,8 +567,8 @@ var _ = Describe("AuditHandler Integration Tests", func() {
 						Kind: "CloudProfile",
 						Name: "test",
 					},
-					Region:            region,
-					SecretBindingName: new("test-secret-binding"), // Required field
+					Region:                 region,
+					CredentialsBindingName: new("test-secret-binding"), // Required field
 					Provider: gardenercorev1beta1.Provider{
 						Type: "openstack",
 						Workers: []gardenercorev1beta1.Worker{{
