@@ -1,6 +1,6 @@
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP-cloud-infrastructure/persephone)](https://api.reuse.software/info/github.com/SAP-cloud-infrastructure/persephone)
 
-# persephone
+# Project Persephone
 
 ## About this project
 
