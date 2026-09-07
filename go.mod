@@ -8,12 +8,13 @@ require (
 	github.com/gardener/gardener v1.135.2-0.20260206151026-f39065093aa7 // this points to v1.135.2 which is not yet released
 	github.com/gardener/gardener-extension-provider-openstack v1.51.0
 	github.com/go-logr/logr v1.4.3
-	github.com/gophercloud/gophercloud/v2 v2.13.0
+	github.com/gophercloud/gophercloud/v2 v2.14.0
+	github.com/gorilla/mux v1.8.1
 	github.com/onsi/ginkgo/v2 v2.28.3
 	github.com/onsi/gomega v1.40.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/sapcc/go-api-declarations v1.25.0
-	github.com/sapcc/go-bits v0.0.0-20260818140528-75bdd20c7867
+	github.com/sapcc/go-bits v0.0.0-20260907125021-ceb8c12b73ac
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	go.xyrillian.de/gg v1.14.0
@@ -28,8 +29,6 @@ require (
 	sigs.k8s.io/controller-runtime v0.22.5
 	sigs.k8s.io/yaml v1.6.0
 )
-
-require github.com/gorilla/mux v1.8.1
 
 require (
 	cel.dev/expr v0.25.1 // indirect
@@ -86,7 +85,6 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-yaml v1.18.0 // indirect
-	github.com/gofrs/uuid/v5 v5.5.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
