@@ -8,5 +8,5 @@ find . -type f -name '*.go' | while read -r FILE_PATH ; do
         exit 1
     fi
     echo "$FILE_PATH: match on line ${LINE_MATCH}" >&2
-    sed -I -n "${LINE_MATCH},$p' "$FILE_PATH"
+    perl -i -ne "print if $. >= ${LINE_MATCH%%:*}" "$FILE_PATH"
 done
