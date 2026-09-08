@@ -71,21 +71,10 @@ nix:
 renovate:
   enabled: true
 
-reuse:
-  annotations:
-  - SPDX-FileCopyrightText: SAP SE or an SAP affiliate company and Gardener contributors
-    SPDX-License-Identifier: Apache-2.0
-    paths:
-    - internal/webhook/add.go
-    - internal/webhook/config/config.go
-    - internal/webhook/shootadmission/add.go
-    - internal/webhook/token/add.go
-    - test/integration/webhook/token/token_suite_test.go
-    - test/integration/webhook/token/token_test.go
-  - SPDX-FileCopyrightText: SAP SE or an SAP affiliate company
-    SPDX-License-Identifier: Apache-2.0
-    paths:
-    - docs/*.png
+license:
+  addHeaders: true
+  copyright: '2026 SAP SE or an SAP affiliate company and Project Persephone contributors'
+  spdx: Apache-2.0
 
 shellCheck:
   ignorePaths:
