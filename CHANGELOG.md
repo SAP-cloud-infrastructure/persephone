@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-09-08
+
 ### Added
 
 - Initial release of `scikube`.
+
+[Unreleased]: https://github.com/SAP-cloud-infrastructure/persephone/compare/v0.0.1...HEAD
+
+[0.0.1]: https://github.com/SAP-cloud-infrastructure/persephone/releases/tag/v0.0.1
