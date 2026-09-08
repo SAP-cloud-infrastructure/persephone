@@ -43,7 +43,7 @@ func GetFakeE2EClient(ctx context.Context, authOptions gophercloud.AuthOptions) 
 						"links": [
 							{
 								"rel": "self",
-								"href": "`+fakeServer.Endpoint()+`"
+								"href": "`+fakeServer.Endpoint()+`v3/"
 							}
 						]
 					}
@@ -53,18 +53,13 @@ func GetFakeE2EClient(ctx context.Context, authOptions gophercloud.AuthOptions) 
 	})
 
 	fakeServer.Mux.HandleFunc("POST /v3/auth/tokens", func(w http.ResponseWriter, r *http.Request) {
-		FakeE2EOptions.Credentials = append(FakeE2EOptions.Credentials, fakeCredential{
-			Name:      "my-application-credential",
-			Roles:     []string{"role1", "role2"},
-			ExpiresAt: "2030-01-01T00:00:00Z",
-		})
-
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-Subject-Token", "fake-token-id")
 		w.WriteHeader(http.StatusCreated)
 		fmt.Fprint(w, `{
 			"token": {
-				"id": "fake-token-id",
-				"expires_at": "`+FakeE2EOptions.Credentials[0].ExpiresAt+`"
+				"expires_at": "2030-01-01T00:00:00Z",
+				"catalog": []
 			}
 		}`)
 	})
