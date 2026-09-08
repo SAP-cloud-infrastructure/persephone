@@ -73,7 +73,7 @@ renovate:
 
 license:
   addHeaders: false
-  copyright: '2026 SAP SE or an SAP affiliate company and Project Persephone contributors'
+  copyright: 'SAP SE or an SAP affiliate company and Project Persephone contributors'
   spdx: Apache-2.0
 
 shellCheck:
