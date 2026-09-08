@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package openstack
 
 import (

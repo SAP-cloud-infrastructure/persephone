@@ -2,11 +2,14 @@
 # SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
 # SPDX-License-Identifier: Apache-2.0
 
-find . -type f -name '*.go' | while read -r FILE_PATH ; do
-    if ! LINE_MATCH="$(grep -n '^package ' "$FILE_PATH")"; then
-        echo "error: no package line for file ${FILE_PATH}"
-        exit 1
-    fi
-    echo "$FILE_PATH: match on line ${LINE_MATCH}" >&2
-    perl -i -ne "print if $. >= ${LINE_MATCH%%:*}" "$FILE_PATH"
+set -eoux pipefail
+
+find cmd internal test -type f -name '*.go' \
+    | while read -r FILE_PATH ; do
+          if ! LINE_MATCH="$(grep -n '^package ' "$FILE_PATH")"; then
+              echo "error: no package line for file ${FILE_PATH}"
+              exit 1
+          fi
+      echo "$FILE_PATH: match on line ${LINE_MATCH}" >&2
+      perl -i -ne "print if $. >= ${LINE_MATCH%%:*}" "$FILE_PATH"
 done
