@@ -36,7 +36,7 @@ default: build-all
 check: test-integration
 test-integration: FORCE
 	@printf "\e[1;36m>> Running integration tests\e[0m\n"
-	./hack/test-integration.sh ./test/integration/...
+	./hack/test-integration.bash ./test/integration/...
 
 install-goimports: FORCE
 	@if ! hash goimports 2>/dev/null; then printf "\e[1;36m>> Installing goimports (this may take a while)...\e[0m\n"; go install golang.org/x/tools/cmd/goimports@latest; fi
