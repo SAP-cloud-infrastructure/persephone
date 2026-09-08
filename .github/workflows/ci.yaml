@@ -47,7 +47,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          persist-credentials: false
+          persist-credentials: true # required by fgrosse/go-coverage-report (tj-actions/changed-files needs to fetch PR branch)
       - name: Post coverage report
         uses: fgrosse/go-coverage-report@e432de98ee94a276e8f666d25bfd76347665f75b # v1.3.1
         with:
