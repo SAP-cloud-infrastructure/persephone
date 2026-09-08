@@ -17,7 +17,6 @@ func GetTestIdentityClient(t GinkgoTInterface) *gophercloud.ServiceClient {
 		DomainName: "Default",
 		Username:   "dummy",
 		Password:   "dummy",
-		TokenID:    "dummy",
 	}
 
 	providerClient, err := GetFakeE2EClient(t.Context(), authOptions)

@@ -107,7 +107,8 @@ func (s *server) getServiceInfo() liquid.ServiceInfo {
 }
 
 // AddTo implements the httpapi.API interface.
-func (s *server) AddTo(r *mux.Router) {
+func (s *server) AddTo(c *httpapi.Composer) {
+	r := c.Router()
 	r.Methods("GET").Path("/v1/info").HandlerFunc(s.handleGetInfo)
 	r.Methods("POST").Path("/v1/report-capacity").HandlerFunc(s.handleReportCapacity)
 	r.Methods("POST").Path("/v1/projects/{project_id}/report-usage").HandlerFunc(s.handleReportUsage)
