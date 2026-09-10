@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: persephone-audit-webhook
+  namespace: garden
+  labels:
+    app: persephone
+    role: audit-webhook
+spec:
+  type: ClusterIP
+  selector:
+    app: persephone
+    role: audit-webhook
+  ports:
+    - name: webhook
+      protocol: TCP
+      port: 9443
+      targetPort: 9443
+    - name: metrics
+      protocol: TCP
+      port: 8080
+      targetPort: metrics

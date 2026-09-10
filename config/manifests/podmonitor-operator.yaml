@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: persephone-operator
+  namespace: garden
+  labels:
+    app: persephone
+    role: operator
+    plugin: kube-monitoring
+spec:
+  selector:
+    matchLabels:
+      app: persephone
+      role: operator
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 15s
+      path: /metrics
+      scheme: http

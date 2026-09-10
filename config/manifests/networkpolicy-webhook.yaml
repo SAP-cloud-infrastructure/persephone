@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: persephone-webhook
+  namespace: garden
+  labels:
+    app: persephone
+    role: webhook
+spec:
+  podSelector:
+    matchLabels:
+      app: persephone
+      role: webhook
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow Prometheus to scrape metrics
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+              prometheus: kube-monitoring
+      ports:
+        - protocol: TCP
+          port: 8080

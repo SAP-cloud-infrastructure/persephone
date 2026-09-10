@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: persephone-audit-webhook
+  namespace: garden
+  labels:
+    app: persephone
+    role: audit-webhook
+    plugin: kube-monitoring
+spec:
+  selector:
+    matchLabels:
+      app: persephone
+      role: audit-webhook
+  endpoints:
+    - port: metrics

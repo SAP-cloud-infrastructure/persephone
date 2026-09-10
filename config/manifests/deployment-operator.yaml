@@ -1,0 +1,83 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: persephone-operator
+  namespace: garden
+  labels:
+    app: persephone
+    role: operator
+  annotations:
+    secret.reloader.stakater.com/reload: "persephone-config-operator"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: persephone
+      role: operator
+  template:
+    metadata:
+      labels:
+        app: persephone
+        role: operator
+        networking.gardener.cloud/to-dns: allowed
+        networking.gardener.cloud/to-public-networks: allowed
+        networking.resources.gardener.cloud/to-virtual-garden-kube-apiserver-tcp-443: allowed
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: persephone-operator
+          command: ["/usr/bin/persephone-operator"]
+          args:
+            - -config=/tmp/config/config.yaml
+            - -metrics-bind-address=:8080
+          image: persephone-operator:latest
+          env:
+            - name: KUBERNETES_SERVICE_HOST
+              value: virtual-garden-kube-apiserver.garden.svc.cluster.local
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+              scheme: HTTP
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+              scheme: HTTP
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - mountPath: /tmp/config
+              name: config
+              readOnly: true
+            - name: kubeconfig
+              mountPath: "/var/run/secrets/kubernetes.io/serviceaccount"
+          ports:
+            - containerPort: 8081
+              name: health
+              protocol: TCP
+            - containerPort: 8080
+              name: metrics
+              protocol: TCP
+      volumes:
+        - name: config
+          secret:
+            secretName: persephone-config-operator
+        - name: kubeconfig
+          secret:
+            items:
+            - key: token
+              path: token
+            - key: bundle.crt
+              path: ca.crt
+            secretName: persephone-operator-token

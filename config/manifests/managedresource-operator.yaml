@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: resources.gardener.cloud/v1alpha1
+kind: ManagedResource
+metadata:
+  name: persephone-managedresource-rbac-operator
+  namespace: garden
+  labels:
+    app: persephone
+    role: operator
+spec:
+  secretRefs:
+    - name: persephone-managedresource-rbac-operator
