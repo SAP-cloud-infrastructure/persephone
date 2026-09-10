@@ -1,0 +1,158 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: persephone-alerts
+  namespace: garden
+  labels:
+    app: persephone
+    plugin: kube-monitoring
+    role: alert-rules
+spec:
+  groups:
+    # Groups with critical-severity alerts come first so their indices are
+    # predictable and easy to reference in Kustomize overlay patches (e.g. QA).
+    - name: persephone.operator.internalsecret
+      interval: 30s
+      rules:
+        # index 0 — critical; patched to warning in the QA overlay
+        - alert: PersephoneCredentialRotationFailures
+          expr: |
+            rate(persephone_credential_rotations_total{outcome="failure"}[5m]) > 0
+          for: 5m
+          labels:
+            severity: critical
+            service: persephone
+            component: operator
+            tier: os
+          annotations:
+            summary: "Credential rotation failures in {{ $labels.region }}"
+            description: "Credential rotation failures detected in region {{ $labels.region }}. This may impact cluster access. Rate: {{ $value | humanize }} failures/sec."
+
+        - alert: PersephoneCredentialCleanupFailures
+          expr: |
+            rate(persephone_credential_cleanups_total{outcome="failure"}[5m]) > 0.1
+          for: 10m
+          labels:
+            severity: warning
+            service: persephone
+            component: operator
+            tier: os
+          annotations:
+            summary: "Credential cleanup failures in {{ $labels.region }}"
+            description: "Credential cleanup failures detected in region {{ $labels.region }}. Old credentials may not be cleaned up properly. Rate: {{ $value | humanize }} failures/sec."
+
+    - name: persephone.webhook.shootadmission
+      interval: 30s
+      rules:
+        # index 0 — critical; patched to warning in the QA overlay
+        - alert: PersephoneShootCredentialIssuanceFailures
+          expr: |
+            rate(persephone_shoot_credential_issuances_total{outcome="failure"}[5m]) > 0.1
+          for: 10m
+          labels:
+            severity: critical
+            service: persephone
+            component: webhook
+            tier: os
+          annotations:
+            summary: "Application credential issuance failures in {{ $labels.region }}"
+            description: "Application credential issuance failures detected in region {{ $labels.region }}. Shoot clusters may fail to provision. Rate: {{ $value | humanize }} failures/sec."
+
+        - alert: PersephoneShootMutationFailures
+          expr: |
+            (
+              sum by (region) (rate(persephone_shoot_mutations_total{outcome="failure"}[5m]))
+              /
+              sum by (region) (rate(persephone_shoot_mutations_total[5m]))
+            ) > 0.1
+          for: 10m
+          labels:
+            severity: warning
+            service: persephone
+            component: webhook
+            tier: os
+          annotations:
+            summary: "High Shoot mutation failure rate in {{ $labels.region }}"
+            description: "Shoot mutation failure rate is {{ $value | humanizePercentage }} in region {{ $labels.region }}. More than 10% of shoot mutations are failing."
+
+        - alert: PersephoneFloatingPoolDetectionFailures
+          expr: |
+            rate(persephone_shoot_floating_pool_detections_total{outcome="failure"}[5m]) > 0.1
+          for: 10m
+          labels:
+            severity: warning
+            service: persephone
+            component: webhook
+            tier: os
+          annotations:
+            summary: "Floating pool detection failures in {{ $labels.region }}"
+            description: "Floating pool detection failures detected in region {{ $labels.region }}. Shoot clusters may not get proper floating IP configuration. Rate: {{ $value | humanize }} failures/sec."
+
+    - name: persephone.authentication
+      interval: 30s
+      rules:
+        - alert: PersephoneHighAuthenticationFailureRate
+          expr: |
+            (
+              sum by (region) (rate(persephone_authentication_attempts_total{outcome="failure"}[5m]))
+              /
+              sum by (region) (rate(persephone_authentication_attempts_total[5m]))
+            ) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+            service: persephone
+            component: webhook
+            tier: os
+          annotations:
+            summary: "High authentication failure rate in {{ $labels.region }}"
+            description: "Authentication failure rate is {{ $value | humanizePercentage }} in region {{ $labels.region }}. More than 10% of authentication attempts are failing."
+
+        - alert: PersephoneKeystoneAuthFailures
+          expr: |
+            rate(persephone_keystone_auth_failures_total[5m]) > 0.5
+          for: 5m
+          labels:
+            severity: warning
+            service: persephone
+            component: webhook
+            tier: os
+          annotations:
+            summary: "Keystone authentication failures in {{ $labels.region }}"
+            description: "Keystone authentication failures detected in region {{ $labels.region }} (error_type: {{ $labels.error_type }}). Rate: {{ $value | humanize }} failures/sec."
+
+    - name: persephone.operator.project
+      interval: 30s
+      rules:
+        - alert: PersephoneProjectResourceCreationFailures
+          expr: |
+            rate(persephone_project_resource_creations_total{outcome="failure"}[5m]) > 0
+          for: 10m
+          labels:
+            severity: warning
+            service: persephone
+            component: operator
+            tier: os
+          annotations:
+            summary: "Project resource creation failures in {{ $labels.region }}"
+            description: "Gardener project resource creation failures detected in region {{ $labels.region }}. New projects may not be provisioned correctly. Rate: {{ $value | humanize }} failures/sec."
+
+    - name: persephone.webhook.resource_reconciliation
+      interval: 30s
+      rules:
+        - alert: PersephoneWebhookResourceReconciliationFailures
+          expr: |
+            rate(persephone_webhook_resource_reconciliations_total{outcome="failure"}[5m]) > 0.1
+          for: 10m
+          labels:
+            severity: warning
+            service: persephone
+            component: webhook
+            tier: os
+          annotations:
+            summary: "Webhook resource reconciliation failures in {{ $labels.region }}"
+            description: "Gardener resource reconciliation failures detected during authentication in region {{ $labels.region }}. Rate: {{ $value | humanize }} failures/sec."

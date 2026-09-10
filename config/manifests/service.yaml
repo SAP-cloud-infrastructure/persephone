@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: persephone-webhook
+  namespace: garden
+  annotations:
+    networking.resources.gardener.cloud/from-all-webhook-targets-allowed-ports: '[{"protocol":"TCP","port":9443}]'
+spec:
+  type: ClusterIP
+  selector:
+    app: persephone
+    role: webhook
+  ports:
+    - protocol: TCP
+      port: 9443
+      targetPort: 9443
+      name: webhook

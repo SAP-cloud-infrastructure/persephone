@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: persephone-audit-webhook
+  namespace: garden
+  labels:
+    app: persephone
+    role: audit-webhook
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: persephone
+      role: audit-webhook
+  template:
+    metadata:
+      labels:
+        app: persephone
+        role: audit-webhook
+        networking.gardener.cloud/to-runtime-apiserver: allowed
+        networking.gardener.cloud/to-dns: allowed
+        networking.gardener.cloud/to-public-networks: allowed
+    spec:
+      serviceAccountName: persephone-audit-webhook
+      containers:
+        - name: persephone-audit-webhook
+          command: ["/usr/bin/persephone-audit-webhook"]
+          args:
+            - -config=/tmp/config/config.yaml
+            - -leader-elect=true
+            - -metrics-bind-address=:8080
+          image: persephone-audit-webhook:latest
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - mountPath: /tmp/config
+              name: config
+              readOnly: true
+          ports:
+            - containerPort: 9443
+            - containerPort: 8080
+              name: metrics
+      volumes:
+        - name: config
+          secret:
+            secretName: persephone-config-webhook
