@@ -44,6 +44,26 @@ const (
 	DefaultLoadBalancerType = "f5"
 )
 
+// The following +api-doc:allow markers define the ShootSpec fields exposed in
+// the public Persephone API reference. Fields not listed here are
+// auto-injected by this webhook and must not be set by customers
+// (provider.type, region, cloudProfile, credentialsBindingName,
+// seedSelector, provider.controlPlaneConfig, provider.infrastructureConfig).
+//
+// +api-doc:allow spec.kubernetes
+// +api-doc:allow spec.networking
+// +api-doc:allow spec.provider  workers-only; type/infrastructureConfig/controlPlaneConfig are injected
+// +api-doc:allow spec.maintenance
+// +api-doc:allow spec.hibernation
+// +api-doc:allow spec.dns
+// +api-doc:allow spec.purpose
+// +api-doc:allow spec.addons
+// +api-doc:allow spec.extensions
+// +api-doc:allow spec.tolerations
+// +api-doc:allow spec.systemComponents
+// +api-doc:allow spec.monitoring
+// +api-doc:allow spec.accessRestrictions
+
 // NewClusterUserClientSet is an alias for openstacklocal.NewClusterUserClientSet.
 // Exposed for testing.
 var NewClusterUserClientSet = openstacklocal.NewClusterUserClientSet
