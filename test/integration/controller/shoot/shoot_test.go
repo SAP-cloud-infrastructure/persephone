@@ -163,7 +163,9 @@ var _ = Describe("Shoot Controller Integration Tests", func() {
 			}).Should(Succeed())
 
 			By("Create newer InternalSecret")
-			time.Sleep(100 * time.Millisecond) // Sleep to ensure newer InternalSecret has a later creationTimestamp
+			time.Sleep(1100 * time.Millisecond) // Sleep to ensure newer InternalSecret has a later creationTimestamp.
+			// metav1.Time has 1-second granularity, so we need to sleep >1s (not just 100ms) to guarantee
+			// that newerInternalSecret.CreationTimestamp > oldInternalSecret.CreationTimestamp.
 			Expect(testClient.Create(ctx, newerInternalSecret)).To(Succeed())
 
 			By("Wait until manager client observes the newer secret") // needed because mgr's client is cached
