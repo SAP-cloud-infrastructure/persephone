@@ -95,8 +95,3 @@ The following settings cannot be changed after cluster creation:
 - High availability mode (cannot be disabled once enabled)
 - Availability zones (can be added, never removed)
 - Kubernetes version (can be upgraded, never downgraded)
-
-## Related Links
-
-- [API Reference]({{< ref "persephone-api-reference" >}})
-- [Creating a Cluster]({{< ref "creating-a-cluster" >}})
