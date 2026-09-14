@@ -49,7 +49,25 @@ Key Gardener concepts relevant to Persephone users:
 
 ## Requirements and Setup
 
-*Insert a short description what is required to get your project running...*
+Before users can create a Persephone Kubernetes cluster, they must ensure the following prerequisites are met.
+
+### OpenStack Project
+
+You need an active OpenStack project on SAP Cloud Infrastructure. Persephone creates worker nodes and networking resources in your project.
+
+### Roles
+
+You need the `kubernetes_admin` role assigned in the project where you want to create clusters.
+
+### Quota
+
+Your project needs sufficient quota for the resources that Persephone provisions:
+
+- **Compute**: Instances for worker nodes (depends on your worker pool configuration)
+- **Networking**: Networks, subnets, routers, floating IPs, and security groups
+- **Storage**: Volumes for node root disks
+
+The exact quota requirements depend on the number and size of worker nodes in your cluster.
 
 ## Support, Feedback, Contributing
 
