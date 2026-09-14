@@ -10,7 +10,9 @@ SPDX-License-Identifier: Apache-2.0
 
 ## About this project
 
-Kubernetes-as-a-Service operator for SAP Cloud Infrastructure. Automates the provisioning and lifecycle management of Gardener-managed Kubernetes clusters on OpenStack.
+Kubernetes-as-a-Service operator for SAP Cloud Infrastructure. Automates the provisioning and lifecycle management of Gardener-managed Kubernetes clusters on OpenStack. It provides fully managed, CNCF-conformant Kubernetes clusters where the control plane is operated by the service and worker nodes run in your OpenStack project.
+
+Project Persephone is powered by [project "Gardener"](https://gardener.cloud/).
 
 ## Requirements and Setup
 
