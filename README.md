@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0
 
 ## About this project
 
-Kubernetes-as-a-Service operator for SAP Cloud Infrastructure. Automates the provisioning and lifecycle management of Gardener-managed Kubernetes clusters on OpenStack. It provides fully managed, CNCF-conformant Kubernetes clusters where the control plane is operated by the service and worker nodes run in your OpenStack project.
+Kubernetes-as-a-Service operator for SAP Cloud Infrastructure. Automates the provisioning and lifecycle management of Gardener-managed Kubernetes clusters on OpenStack. It provides fully managed, CNCF-conformant Kubernetes clusters where the control plane is operated by the service and worker nodes run in the user (customer) OpenStack project.
 
 Project Persephone is powered by [project "Gardener"](https://gardener.cloud/).
 
@@ -18,14 +18,14 @@ Project Persephone is powered by [project "Gardener"](https://gardener.cloud/).
 
 Persephone uses a split-responsibility model:
 
-- **Control plane**: Runs on central seed clusters managed by Persephone. You do not have direct access to the control plane infrastructure.
-- **Worker nodes**: Run as compute instances in your OpenStack project. Worker nodes consume quota within your project like any other VM. Your workloads execute here alongside any other resources in your project.
+- **Control plane**: Runs on central seed clusters managed by Persephone. Users do not have direct access to the control plane infrastructure.
+- **Worker nodes**: Run as compute instances in the user OpenStack project. Worker nodes consume quota within user projects like any other VM. User workloads execute within user projects alongside any other resources in the project.
 
-This separation means that the Kubernetes API server, etcd, scheduler, and controller manager are fully managed. You interact with your cluster through the Kubernetes API (via kubectl) as with any other Kubernetes cluster.
+This separation means that the Kubernetes API server, etcd, scheduler, and controller manager are fully managed. Users interact with their cluster through the Kubernetes API (via `kubectl`) as with any other Kubernetes cluster.
 
 ### Responsibility Model
 
-| Responsibility | Managed by Persephone | Managed by you |
+| Responsibility | Managed by Persephone | Managed by users |
 |---|---|---|
 | Control plane availability | Yes | |
 | Kubernetes version upgrades | Yes | |
@@ -39,7 +39,7 @@ This separation means that the Kubernetes API server, etcd, scheduler, and contr
 
 ### Gardener Under the Hood
 
-Persephone is built on [project "Gardener"](https://gardener.cloud/), an open-source Kubernetes cluster management system. Gardener's shoot specification is directly exposed — you can customize your cluster using the full range of options that Gardener supports for OpenStack.
+Persephone is built on [project "Gardener"](https://gardener.cloud/), an open-source Kubernetes cluster management system. Gardener's shoot specification is directly exposed — users can customize their cluster using the full range of options that Gardener supports for OpenStack.
 
 Key Gardener concepts relevant to Persephone users:
 
