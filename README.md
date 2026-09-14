@@ -14,6 +14,39 @@ Kubernetes-as-a-Service operator for SAP Cloud Infrastructure. Automates the pro
 
 Project Persephone is powered by [project "Gardener"](https://gardener.cloud/).
 
+### Architecture
+
+Persephone uses a split-responsibility model:
+
+- **Control plane**: Runs on central seed clusters managed by Persephone. You do not have direct access to the control plane infrastructure.
+- **Worker nodes**: Run as compute instances in your OpenStack project. Worker nodes consume quota within your project like any other VM. Your workloads execute here alongside any other resources in your project.
+
+This separation means that the Kubernetes API server, etcd, scheduler, and controller manager are fully managed. You interact with your cluster through the Kubernetes API (via kubectl) as with any other Kubernetes cluster.
+
+### Responsibility Model
+
+| Responsibility | Managed by Persephone | Managed by you |
+|---|---|---|
+| Control plane availability | Yes | |
+| Kubernetes version upgrades | Yes | |
+| Certificate rotation | Yes | |
+| Node OS updates | Yes | |
+| Worker node provisioning | Yes | |
+| Cluster configuration (shoot spec) | | Yes |
+| Workload deployment and management | | Yes |
+| Application security | | Yes |
+| Resource quotas and limits | | Yes |
+
+### Gardener Under the Hood
+
+Persephone is built on [project "Gardener"](https://gardener.cloud/), an open-source Kubernetes cluster management system. Gardener's shoot specification is directly exposed — you can customize your cluster using the full range of options that Gardener supports for OpenStack.
+
+Key Gardener concepts relevant to Persephone users:
+
+- **Shoot**: Your Kubernetes cluster, represented as a declarative specification.
+- **Worker pool**: A group of nodes with the same machine type, OS image, and scaling configuration.
+- **Maintenance window**: A daily time window during which automatic reconciliation and updates occur.
+
 ## Requirements and Setup
 
 *Insert a short description what is required to get your project running...*
