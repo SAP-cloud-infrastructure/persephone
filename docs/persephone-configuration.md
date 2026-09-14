@@ -46,10 +46,7 @@ For details, see [OpenStack Provider Usage](https://gardener.cloud/docs/extensio
 | `spec.networking.services` | Service CIDR range | No |
 | `spec.networking.nodes` | Node CIDR range | No |
 
-{{<hint warning>}}**Warning**
-
-Network CIDR ranges cannot be changed after cluster creation.
-{{< /hint >}}
+**Warning**: Network CIDR ranges cannot be changed after cluster creation.
 
 ## Maintenance
 
@@ -68,10 +65,7 @@ For details, see [Maintenance Windows](https://gardener.cloud/docs/gardener/shoo
 |--------|-------------|---------|
 | `spec.controlPlane.highAvailability.failureTolerance.type` | `node` or `zone` | Enable only (cannot disable) |
 
-{{<hint warning>}}**Warning**
-
-High availability cannot be disabled once enabled.
-{{< /hint >}}
+**Warning**: High availability cannot be disabled once enabled.
 
 For details, see [Control Plane HA](https://gardener.cloud/docs/guides/high-availability/control-plane/).
 
