@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: persephone-audit-webhook
+  namespace: garden
+  labels:
+    app: persephone
+    role: audit-webhook
+spec:
+  podSelector:
+    matchLabels:
+      app: persephone
+      role: audit-webhook
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: auditlog-forwarder
+      ports:
+        - protocol: TCP
+          port: 9443
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+              prometheus: kube-monitoring
+      ports:
+        - protocol: TCP
+          port: 8080

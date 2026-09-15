@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: garden
+
+resources:
+  - deployment-webhook.yaml
+  - deployment-operator.yaml
+  - deployment-audit-webhook.yaml
+  - service.yaml
+  - service-audit-webhook.yaml
+  - servicemonitor-audit-webhook.yaml
+  - podmonitor-webhook.yaml
+  - podmonitor-operator.yaml
+  - prometheusrule.yaml
+  - poddisruptionbudget-webhook.yaml
+  - rbac-audit-webhook.yaml
+  - networkpolicy-webhook.yaml
+  - networkpolicy-operator.yaml
+  - networkpolicy-audit-webhook.yaml
+  - networkpolicy-auditlog-forwarder-egress.yaml
+  - managedresource-webhook.yaml
+  - managedresource-operator.yaml
+  - secrets-webhook.yaml
+  - secrets-operator.yaml
+  - configmap-sync-config.yaml
