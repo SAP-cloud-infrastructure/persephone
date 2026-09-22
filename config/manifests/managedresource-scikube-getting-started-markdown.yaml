@@ -19,6 +19,8 @@ stringData:
       namespace: gardener-system-public
     data:
       README.md: |
+        For managing your clusters with kubectl, install the [scikube CLI](https://help.sap.com/docs/SAP_Cloud_Infrastructure/211d912d4628463eade2317696c1b036/e936cc4e21e24a5e8be5b9c1eaac8e7a.html) utility:
+
         ```sh
         # Install via Homebrew (macOS)
         brew tap sap-cloud-infrastructure/tap
@@ -37,6 +39,8 @@ stringData:
         KUBECONFIG=kubeconfig-for-garden.yaml scikube kubeconfig-for-shoot --name <cluster-name> > kubeconfig-for-shoot.yaml
         KUBECONFIG=kubeconfig-for-shoot.yaml kubectl get nodes
         ```
+
+        For detailed instructions including binary installation and cluster management, see the [Persephone documentation](https://help.sap.com/docs/SAP_Cloud_Infrastructure/211d912d4628463eade2317696c1b036/d8d7ae89e5dd4386afde7e367104d3a8.html).
     ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
