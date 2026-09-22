@@ -23,8 +23,9 @@ resources:
   - networkpolicy-operator.yaml
   - networkpolicy-audit-webhook.yaml
   - networkpolicy-auditlog-forwarder-egress.yaml
-  - managedresource-webhook.yaml
   - managedresource-operator.yaml
+  - managedresource-scikube-getting-started-markdown.yaml
+  - managedresource-webhook.yaml
   - secrets-webhook.yaml
   - secrets-operator.yaml
   - configmap-sync-config.yaml
