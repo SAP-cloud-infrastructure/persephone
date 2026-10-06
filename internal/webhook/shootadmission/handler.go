@@ -200,10 +200,8 @@ func (h *Handler) handle(ctx context.Context, obj runtime.Object) error {
 		if shoot.Spec.Provider.ControlPlaneConfig == nil {
 			log.Info("Setting OpenStack control plane configuration")
 			shoot.Spec.Provider.ControlPlaneConfig = &runtime.RawExtension{Object: &gardeneropenstackv1alpha1.ControlPlaneConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: gardeneropenstackv1alpha1.SchemeGroupVersion.String(),
-					Kind:       "ControlPlaneConfig",
-				},
+				APIVersion:           gardeneropenstackv1alpha1.SchemeGroupVersion.String(),
+				Kind:                 "ControlPlaneConfig",
 				LoadBalancerProvider: DefaultLoadBalancerType,
 			}}
 		}
@@ -235,10 +233,8 @@ func (h *Handler) handle(ctx context.Context, obj runtime.Object) error {
 	if req.Operation == admissionv1.Create {
 		log.Info("Setting seed selector to match region (hotfix for scheduler issue)", "region", openStackUserInfo.Region)
 		shoot.Spec.SeedSelector = &gardenercorev1beta1.SeedSelector{
-			LabelSelector: metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"seed.gardener.cloud/region": openStackUserInfo.Region,
-				},
+			MatchLabels: map[string]string{
+				"seed.gardener.cloud/region": openStackUserInfo.Region,
 			},
 		}
 	}

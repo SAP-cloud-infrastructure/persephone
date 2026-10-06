@@ -77,10 +77,8 @@ var _ = Describe("Transform", func() {
 		It("should transform create event", func() {
 			now := time.Now()
 			shoot := &gardenercorev1beta1.Shoot{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-shoot",
-					Namespace: "garden-test",
-				},
+				Name:      "test-shoot",
+				Namespace: "garden-test",
 				Spec: gardenercorev1beta1.ShootSpec{
 					Region: "qa-de-1",
 				},

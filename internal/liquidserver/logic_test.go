@@ -13,7 +13,6 @@ import (
 	. "go.xyrillian.de/gg/option"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/sap-cloud-infrastructure/persephone/internal/constants"
@@ -100,14 +99,12 @@ func TestLogic_ScanUsage_KeyPresent(t *testing.T) {
 	namespace := internalkubernetes.GetGardenerProjectNamespaceName(region, projectUUID)
 
 	ns := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{Name: namespace},
+		Name: namespace,
 	}
 
 	rq := &corev1.ResourceQuota{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.ResourceQuotaName,
-			Namespace: namespace,
-		},
+		Name:      constants.ResourceQuotaName,
+		Namespace: namespace,
 		Spec: corev1.ResourceQuotaSpec{
 			Hard: corev1.ResourceList{
 				constants.ShootResourceQuotaKey: resource.MustParse("7"),
@@ -153,15 +150,13 @@ func TestLogic_ScanUsage_KeyAbsent(t *testing.T) {
 	namespace := internalkubernetes.GetGardenerProjectNamespaceName(region, projectUUID)
 
 	ns := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{Name: namespace},
+		Name: namespace,
 	}
 
 	// ResourceQuota exists but status.used has no shoot key (zero-shoot steady state).
 	rq := &corev1.ResourceQuota{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.ResourceQuotaName,
-			Namespace: namespace,
-		},
+		Name:      constants.ResourceQuotaName,
+		Namespace: namespace,
 		Spec: corev1.ResourceQuotaSpec{
 			Hard: corev1.ResourceList{
 				constants.ShootResourceQuotaKey: resource.MustParse("5"),

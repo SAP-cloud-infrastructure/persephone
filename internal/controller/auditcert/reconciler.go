@@ -12,7 +12,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -82,13 +81,11 @@ func (r *reconciler) generateAndCreateSecret(ctx context.Context) error {
 	}
 
 	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      r.secretName,
-			Namespace: r.namespace,
-			Labels: map[string]string{
-				"app":  "persephone",
-				"role": "audit-webhook-tls",
-			},
+		Name:      r.secretName,
+		Namespace: r.namespace,
+		Labels: map[string]string{
+			"app":  "persephone",
+			"role": "audit-webhook-tls",
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: data,

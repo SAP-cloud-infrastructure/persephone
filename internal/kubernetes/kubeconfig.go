@@ -15,7 +15,6 @@ import (
 	authenticationv1alpha1 "github.com/gardener/gardener/pkg/apis/authentication/v1alpha1"
 	gardenercorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gophercloud/gophercloud/v2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	api "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -165,10 +164,8 @@ func GetKubeconfigForShoot(ctx context.Context, gardenKubeconfigPath, shootName 
 	}
 
 	shoot := &gardenercorev1beta1.Shoot{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      shootName,
-			Namespace: currentNamespace,
-		},
+		Name:      shootName,
+		Namespace: currentNamespace,
 	}
 	if err := kubeClient.SubResource("adminkubeconfig").Create(ctx, shoot, adminKubeconfigRequest); err != nil {
 		return []byte(""), fmt.Errorf("could not create admin kubeconfig for shoot cluster: %w", err)

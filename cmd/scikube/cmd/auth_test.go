@@ -195,9 +195,9 @@ func TestAuthCmd_SucceedsByReauthenticatingWithKeystone_IfCachedCredentialsExist
 	authFunc = func(ctx context.Context, authOptions gophercloud.AuthOptions, noRegionPrefix bool) (*v1.ExecCredential, error) {
 		ts := meta_v1.NewTime(freshTokenExpiresAt)
 		return &v1.ExecCredential{
-			TypeMeta: meta_v1.TypeMeta{Kind: "ExecCredential", APIVersion: "client.authentication.k8s.io/v1"},
-			Spec:     v1.ExecCredentialSpec{Interactive: false},
-			Status:   &v1.ExecCredentialStatus{ExpirationTimestamp: &ts, Token: token},
+			Kind: "ExecCredential", APIVersion: "client.authentication.k8s.io/v1",
+			Spec:   v1.ExecCredentialSpec{Interactive: false},
+			Status: &v1.ExecCredentialStatus{ExpirationTimestamp: &ts, Token: token},
 		}, nil
 	}
 	expiresAt := time.Now().Add(-5 * time.Minute).UTC().Format("2006-01-02T15:04:05Z")

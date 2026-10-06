@@ -27,11 +27,9 @@ var _ = Describe("Shoot Controller Integration Tests", func() {
 	Context("when Shoot is in the garden namespace", func() {
 		It("should not reconcile the Shoot", func() {
 			gardenShoot := &gardenercorev1beta1.Shoot{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "managed-seed-shoot",
-					Namespace: v1beta1constants.GardenNamespace,
-					Labels:    map[string]string{testID: testRunID},
-				},
+				Name:      "managed-seed-shoot",
+				Namespace: v1beta1constants.GardenNamespace,
+				Labels:    map[string]string{testID: testRunID},
 				Spec: gardenercorev1beta1.ShootSpec{
 					CloudProfile:           &gardenercorev1beta1.CloudProfileReference{Kind: "CloudProfile", Name: "test"},
 					Region:                 "test-region",
@@ -43,7 +41,7 @@ var _ = Describe("Shoot Controller Integration Tests", func() {
 			}
 
 			By("Create garden namespace")
-			gardenNs := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.GardenNamespace}}
+			gardenNs := &corev1.Namespace{Name: v1beta1constants.GardenNamespace}
 			Expect(testClient.Create(ctx, gardenNs)).To(Or(Succeed(), BeAlreadyExistsError()))
 
 			By("Create Shoot in garden namespace")
@@ -68,11 +66,9 @@ var _ = Describe("Shoot Controller Integration Tests", func() {
 
 	BeforeEach(func() {
 		shoot = &gardenercorev1beta1.Shoot{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-shoot",
-				Namespace: testNamespace.Name,
-				Labels:    map[string]string{testID: testRunID},
-			},
+			Name:      "test-shoot",
+			Namespace: testNamespace.Name,
+			Labels:    map[string]string{testID: testRunID},
 			Spec: gardenercorev1beta1.ShootSpec{
 				CloudProfile:           &gardenercorev1beta1.CloudProfileReference{Kind: "CloudProfile", Name: "test"},
 				Region:                 "test-region",
@@ -84,21 +80,17 @@ var _ = Describe("Shoot Controller Integration Tests", func() {
 		}
 
 		oldInternalSecret = &gardenercorev1beta1.InternalSecret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "old-credentials",
-				Namespace: testNamespace.Name,
-				Labels:    map[string]string{"persephone.sci.cloud.sap/shoot-name": shoot.Name},
-			},
-			Data: map[string][]byte{"key": []byte("old-value")},
+			Name:      "old-credentials",
+			Namespace: testNamespace.Name,
+			Labels:    map[string]string{"persephone.sci.cloud.sap/shoot-name": shoot.Name},
+			Data:      map[string][]byte{"key": []byte("old-value")},
 		}
 
 		newerInternalSecret = &gardenercorev1beta1.InternalSecret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "newer-credentials",
-				Namespace: testNamespace.Name,
-				Labels:    map[string]string{"persephone.sci.cloud.sap/shoot-name": shoot.Name},
-			},
-			Data: map[string][]byte{"key": []byte("newer-value")},
+			Name:      "newer-credentials",
+			Namespace: testNamespace.Name,
+			Labels:    map[string]string{"persephone.sci.cloud.sap/shoot-name": shoot.Name},
+			Data:      map[string][]byte{"key": []byte("newer-value")},
 		}
 
 		DeferCleanup(func() {
@@ -237,20 +229,16 @@ var _ = Describe("Shoot Controller Integration Tests", func() {
 
 		BeforeEach(func() {
 			internalSecret1 = &gardenercorev1beta1.InternalSecret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "internal-secret-1",
-					Namespace: testNamespace.Name,
-					Labels:    map[string]string{"persephone.sci.cloud.sap/shoot-name": shoot.Name},
-				},
-				Data: map[string][]byte{"key": []byte("value1")},
+				Name:      "internal-secret-1",
+				Namespace: testNamespace.Name,
+				Labels:    map[string]string{"persephone.sci.cloud.sap/shoot-name": shoot.Name},
+				Data:      map[string][]byte{"key": []byte("value1")},
 			}
 			internalSecret2 = &gardenercorev1beta1.InternalSecret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "internal-secret-2",
-					Namespace: testNamespace.Name,
-					Labels:    map[string]string{"persephone.sci.cloud.sap/shoot-name": shoot.Name},
-				},
-				Data: map[string][]byte{"key": []byte("value2")},
+				Name:      "internal-secret-2",
+				Namespace: testNamespace.Name,
+				Labels:    map[string]string{"persephone.sci.cloud.sap/shoot-name": shoot.Name},
+				Data:      map[string][]byte{"key": []byte("value2")},
 			}
 
 			By("Create InternalSecrets")

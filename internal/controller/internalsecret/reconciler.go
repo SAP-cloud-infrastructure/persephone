@@ -19,7 +19,6 @@ import (
 	"github.com/gophercloud/gophercloud/v2"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/clock"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -85,7 +84,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 		return reconcile.Result{}, fmt.Errorf("error retrieving object from store: %w", err)
 	}
 
-	shoot := &gardenercorev1beta1.Shoot{ObjectMeta: metav1.ObjectMeta{Name: internalSecret.Labels[constants.LabelKeyShootName], Namespace: internalSecret.Namespace}}
+	shoot := &gardenercorev1beta1.Shoot{Name: internalSecret.Labels[constants.LabelKeyShootName], Namespace: internalSecret.Namespace}
 	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(shoot), shoot); client.IgnoreNotFound(err) != nil {
 		return reconcile.Result{}, fmt.Errorf("failed to retrieve Shoot %q for InternalSecret: %w", client.ObjectKeyFromObject(shoot), err)
 	}
@@ -363,7 +362,7 @@ func (r *Reconciler) deleteClusterServiceUser(ctx context.Context, internalSecre
 		return fmt.Errorf("region %q not supported", openStackUserInfo.Region)
 	}
 
-	namespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: shoot.Namespace}}
+	namespace := &corev1.Namespace{Name: shoot.Namespace}
 	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(namespace), namespace); err != nil {
 		return fmt.Errorf("failed to get namespace %q: %w", namespace.Name, err)
 	}

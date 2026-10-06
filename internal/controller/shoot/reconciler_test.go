@@ -39,23 +39,19 @@ var _ = Describe("Reconciler delete()", func() {
 
 		now := metav1.Now()
 		shoot = &gardenercorev1beta1.Shoot{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              "test-shoot",
-				Namespace:         "garden-test",
-				DeletionTimestamp: &now,
-				// A finalizer is required so the object can carry a DeletionTimestamp
-				// without being immediately garbage-collected by the fake client.
-				Finalizers: []string{FinalizerName},
-			},
+			Name:              "test-shoot",
+			Namespace:         "garden-test",
+			DeletionTimestamp: &now,
+			// A finalizer is required so the object can carry a DeletionTimestamp
+			// without being immediately garbage-collected by the fake client.
+			Finalizers: []string{FinalizerName},
 		}
 
 		secret = &gardenercorev1beta1.InternalSecret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "credentials-v1",
-				Namespace: "garden-test",
-				Labels: map[string]string{
-					constants.LabelKeyShootName: "test-shoot",
-				},
+			Name:      "credentials-v1",
+			Namespace: "garden-test",
+			Labels: map[string]string{
+				constants.LabelKeyShootName: "test-shoot",
 			},
 		}
 	})

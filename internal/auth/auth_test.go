@@ -162,10 +162,8 @@ func TestFileStorageExecCredentialCache_Read_SucceedsIfValidJSON(t *testing.T) {
 	}
 	expectedExpirationTimestamp := meta_v1.NewTime(expiresAt)
 	assert.Equal(t, ec, &v1.ExecCredential{
-		TypeMeta: meta_v1.TypeMeta{
-			Kind:       "ExecCredential",
-			APIVersion: "client.authentication.k8s.io/v1",
-		},
+		Kind:       "ExecCredential",
+		APIVersion: "client.authentication.k8s.io/v1",
 		Spec: v1.ExecCredentialSpec{
 			Interactive: false,
 		},
@@ -182,7 +180,7 @@ func TestFileStorageExecCredentialCache_Write_WritesByCreatingCacheDir(t *testin
 	cacheDir := filepath.Join(os.TempDir(), "TestFileStorageExecCredentialCache_Write_WritesByCreatingCacheDir")
 	defer os.RemoveAll(cacheDir)
 	cacheFile := filepath.Join(cacheDir, "exec-credential")
-	ec := &v1.ExecCredential{TypeMeta: meta_v1.TypeMeta{Kind: "ExecCredential"}}
+	ec := &v1.ExecCredential{Kind: "ExecCredential"}
 	s := &FileStorageExecCredentialCache{}
 	if err := s.Write(cacheFile, ec); err != nil {
 		t.Error(err)
@@ -193,7 +191,7 @@ func TestFileStorageExecCredentialCache_Write_WritesByCreatingCacheDir(t *testin
 func TestFileStorageExecCredentialCache_Write_WritesWith0600Mode(t *testing.T) {
 	cacheDir := t.TempDir()
 	cacheFile := filepath.Join(cacheDir, "exec-credential")
-	ec := &v1.ExecCredential{TypeMeta: meta_v1.TypeMeta{Kind: "ExecCredential"}}
+	ec := &v1.ExecCredential{Kind: "ExecCredential"}
 	s := &FileStorageExecCredentialCache{}
 	if err := s.Write(cacheFile, ec); err != nil {
 		t.Error(err)
@@ -214,7 +212,7 @@ func TestFileStorageExecCredentialCache_Write_WritesWith0600Mode(t *testing.T) {
 func TestFileStorageExecCredentialCache_Write_WritesToCacheAsJSON(t *testing.T) {
 	cacheDir := t.TempDir()
 	cacheFile := filepath.Join(cacheDir, "exec-credential")
-	ec := &v1.ExecCredential{TypeMeta: meta_v1.TypeMeta{Kind: "ExecCredential"}}
+	ec := &v1.ExecCredential{Kind: "ExecCredential"}
 	s := &FileStorageExecCredentialCache{}
 	if err := s.Write(cacheFile, ec); err != nil {
 		t.Error(err)

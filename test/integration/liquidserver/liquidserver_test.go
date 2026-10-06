@@ -11,7 +11,6 @@ import (
 	. "go.xyrillian.de/gg/option"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -42,7 +41,7 @@ var _ = Describe("Logic", func() {
 		serviceInfo = liquid.ServiceInfo{Version: 1}
 
 		By("Create project namespace")
-		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: projectNS}}
+		ns := &corev1.Namespace{Name: projectNS}
 		Expect(testClient.Create(ctx, ns)).To(Succeed())
 		DeferCleanup(func() {
 			Expect(testClient.Delete(ctx, ns)).To(Succeed())
@@ -52,10 +51,8 @@ var _ = Describe("Logic", func() {
 	// createResourceQuota simulates the webhook provisioning a ResourceQuota in the project namespace.
 	createResourceQuota := func(quota string) *corev1.ResourceQuota {
 		rq := &corev1.ResourceQuota{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      constants.ResourceQuotaName,
-				Namespace: projectNS,
-			},
+			Name:      constants.ResourceQuotaName,
+			Namespace: projectNS,
 			Spec: corev1.ResourceQuotaSpec{
 				Hard: corev1.ResourceList{
 					constants.ShootResourceQuotaKey: resource.MustParse(quota),

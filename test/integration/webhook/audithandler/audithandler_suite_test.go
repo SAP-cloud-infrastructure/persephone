@@ -25,7 +25,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/sapcc/go-bits/audittools"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/rest"
@@ -198,11 +197,9 @@ var _ = BeforeSuite(func() {
 
 	By("Create test Namespace")
 	testNamespace = &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "garden-" + testRunID,
-			Labels: map[string]string{
-				testID: testRunID,
-			},
+		Name: "garden-" + testRunID,
+		Labels: map[string]string{
+			testID: testRunID,
 		},
 	}
 	Expect(testClient.Create(ctx, testNamespace)).To(Succeed())

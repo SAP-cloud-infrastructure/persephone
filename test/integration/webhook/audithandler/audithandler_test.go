@@ -53,11 +53,9 @@ var _ = Describe("AuditHandler Integration Tests", func() {
 		// Helper to send batch of events
 		sendAuditEvents = func(events ...*auditv1.Event) (*http.Response, error) {
 			eventList := &auditv1.EventList{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "audit.k8s.io/v1",
-					Kind:       "EventList",
-				},
-				Items: make([]auditv1.Event, len(events)),
+				APIVersion: "audit.k8s.io/v1",
+				Kind:       "EventList",
+				Items:      make([]auditv1.Event, len(events)),
 			}
 
 			for i, event := range events {
@@ -559,10 +557,8 @@ var _ = Describe("AuditHandler Integration Tests", func() {
 		createShoot := func(region string) *gardenercorev1beta1.Shoot {
 			shootCounter++
 			return &gardenercorev1beta1.Shoot{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("test-shoot-%d", shootCounter),
-					Namespace: testNamespace.Name,
-				},
+				Name:      fmt.Sprintf("test-shoot-%d", shootCounter),
+				Namespace: testNamespace.Name,
 				Spec: gardenercorev1beta1.ShootSpec{
 					CloudProfile: &gardenercorev1beta1.CloudProfileReference{
 						Kind: "CloudProfile",
@@ -829,10 +825,8 @@ var _ = Describe("AuditHandler Integration Tests", func() {
 
 			By("Requesting adminkubeconfig subresource with OpenStack user client")
 			adminKubeconfigRequest := &authenticationv1alpha1.AdminKubeconfigRequest{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "authentication.gardener.cloud/v1alpha1",
-					Kind:       "AdminKubeconfigRequest",
-				},
+				APIVersion: "authentication.gardener.cloud/v1alpha1",
+				Kind:       "AdminKubeconfigRequest",
 				Spec: authenticationv1alpha1.AdminKubeconfigRequestSpec{
 					ExpirationSeconds: new(int64(3600)),
 				},
@@ -875,10 +869,8 @@ var _ = Describe("AuditHandler Integration Tests", func() {
 
 			By("Requesting adminkubeconfig subresource")
 			adminKubeconfigRequest := &authenticationv1alpha1.AdminKubeconfigRequest{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "authentication.gardener.cloud/v1alpha1",
-					Kind:       "AdminKubeconfigRequest",
-				},
+				APIVersion: "authentication.gardener.cloud/v1alpha1",
+				Kind:       "AdminKubeconfigRequest",
 				Spec: authenticationv1alpha1.AdminKubeconfigRequestSpec{
 					ExpirationSeconds: new(int64(3600)),
 				},
@@ -906,15 +898,11 @@ var _ = Describe("AuditHandler Integration Tests", func() {
 // createTestAuditEvent creates a test audit event with OpenStack credentials.
 func createTestAuditEvent(region, verb string, stage auditv1.Stage) *auditv1.Event {
 	shoot := &gardenercorev1beta1.Shoot{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "core.gardener.cloud/v1beta1",
-			Kind:       "Shoot",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-shoot",
-			Namespace: testNamespace.Name,
-			UID:       "test-shoot-uid",
-		},
+		APIVersion: "core.gardener.cloud/v1beta1",
+		Kind:       "Shoot",
+		Name:       "test-shoot",
+		Namespace:  testNamespace.Name,
+		UID:        "test-shoot-uid",
 		Spec: gardenercorev1beta1.ShootSpec{
 			Region: region,
 		},
@@ -926,10 +914,8 @@ func createTestAuditEvent(region, verb string, stage auditv1.Stage) *auditv1.Eve
 	}
 
 	return &auditv1.Event{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "audit.k8s.io/v1",
-			Kind:       "Event",
-		},
+		APIVersion: "audit.k8s.io/v1",
+		Kind:       "Event",
 		Level:      auditv1.LevelMetadata,
 		AuditID:    "test-audit-id",
 		Stage:      stage,
@@ -970,10 +956,8 @@ func createTestAuditEvent(region, verb string, stage auditv1.Stage) *auditv1.Eve
 // createTestKubeconfigAuditEvent creates a test audit event for a kubeconfig subresource request.
 func createTestKubeconfigAuditEvent(region, subresource string) *auditv1.Event {
 	return &auditv1.Event{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "audit.k8s.io/v1",
-			Kind:       "Event",
-		},
+		APIVersion: "audit.k8s.io/v1",
+		Kind:       "Event",
 		Level:      auditv1.LevelRequestResponse,
 		AuditID:    "test-kubeconfig-audit-id",
 		Stage:      auditv1.StageResponseComplete,

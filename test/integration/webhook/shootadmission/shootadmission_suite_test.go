@@ -20,7 +20,6 @@ import (
 	admissionv1 "k8s.io/api/admission/v1"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/rest"
 	"k8s.io/utils/ptr"
@@ -68,16 +67,14 @@ var _ = BeforeSuite(func() {
 		Environment: &envtest.Environment{
 			WebhookInstallOptions: envtest.WebhookInstallOptions{
 				MutatingWebhooks: []*admissionregistrationv1.MutatingWebhookConfiguration{{
-					ObjectMeta: metav1.ObjectMeta{Name: "shoot-mutating-webhoook"},
+					Name: "shoot-mutating-webhoook",
 					Webhooks: []admissionregistrationv1.MutatingWebhook{{
 						Name: "shoot-admission.webhook.persephone.sci.cloud.sap",
 						Rules: []admissionregistrationv1.RuleWithOperations{{
-							Rule: admissionregistrationv1.Rule{
-								APIGroups:   []string{gardenercorev1beta1.GroupName},
-								APIVersions: []string{"*"},
-								Resources:   []string{"shoots"},
-							},
-							Operations: []admissionregistrationv1.OperationType{admissionregistrationv1.Create},
+							APIGroups:   []string{gardenercorev1beta1.GroupName},
+							APIVersions: []string{"*"},
+							Resources:   []string{"shoots"},
+							Operations:  []admissionregistrationv1.OperationType{admissionregistrationv1.Create},
 						}},
 						FailurePolicy: ptr.To(admissionregistrationv1.Fail),
 						ClientConfig: admissionregistrationv1.WebhookClientConfig{
@@ -114,11 +111,9 @@ var _ = BeforeSuite(func() {
 
 	By("Create test Namespace")
 	testNamespace = &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "garden-" + testRunID,
-			Labels: map[string]string{
-				testID: testRunID,
-			},
+		Name: "garden-" + testRunID,
+		Labels: map[string]string{
+			testID: testRunID,
 		},
 	}
 	Expect(testClient.Create(ctx, testNamespace)).To(Succeed())

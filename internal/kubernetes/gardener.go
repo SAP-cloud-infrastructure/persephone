@@ -70,7 +70,7 @@ func GetGardenerProjectName(region, projectID, landscapeName string) string {
 func ReconcileGardenerProjectResources(ctx context.Context, c client.Client, cfg config.PersephoneConfig, openStackUserInfo OpenStackUserInfo) error {
 	gardenerProjectName := GetGardenerProjectName(openStackUserInfo.Region, openStackUserInfo.ProjectID, cfg.LandscapeName)
 
-	namespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: GetGardenerProjectNamespaceName(openStackUserInfo.Region, openStackUserInfo.ProjectID)}}
+	namespace := &corev1.Namespace{Name: GetGardenerProjectNamespaceName(openStackUserInfo.Region, openStackUserInfo.ProjectID)}
 	if _, err := controllerutil.CreateOrPatch(ctx, c, namespace, func() error {
 		metav1.SetMetaDataLabel(&namespace.ObjectMeta, v1beta1constants.GardenRole, v1beta1constants.GardenRoleProject)
 		metav1.SetMetaDataLabel(&namespace.ObjectMeta, v1beta1constants.ProjectName, gardenerProjectName)
@@ -85,7 +85,7 @@ func ReconcileGardenerProjectResources(ctx context.Context, c client.Client, cfg
 		return fmt.Errorf("failed reconciling project namespace %s: %w", namespace.Name, err)
 	}
 
-	project := &gardenercorev1beta1.Project{ObjectMeta: metav1.ObjectMeta{Name: gardenerProjectName}}
+	project := &gardenercorev1beta1.Project{Name: gardenerProjectName}
 	if _, err := controllerutil.CreateOrPatch(ctx, c, project, func() error {
 		project.Spec.Namespace = &namespace.Name
 		return nil
@@ -93,7 +93,7 @@ func ReconcileGardenerProjectResources(ctx context.Context, c client.Client, cfg
 		return fmt.Errorf("failed reconciling project %s: %w", project.Name, err)
 	}
 
-	role := &rbacv1.Role{ObjectMeta: metav1.ObjectMeta{Name: "persephone.sci.cloud.sap:openstack-project-kubernetes-admin", Namespace: namespace.Name}}
+	role := &rbacv1.Role{Name: "persephone.sci.cloud.sap:openstack-project-kubernetes-admin", Namespace: namespace.Name}
 	if _, err := controllerutil.CreateOrPatch(ctx, c, role, func() error {
 		role.Rules = []rbacv1.PolicyRule{
 			{
@@ -122,7 +122,7 @@ func ReconcileGardenerProjectResources(ctx context.Context, c client.Client, cfg
 		return fmt.Errorf("failed reconciling role %s: %w", client.ObjectKeyFromObject(role), err)
 	}
 
-	roleBinding := &rbacv1.RoleBinding{ObjectMeta: metav1.ObjectMeta{Name: role.Name, Namespace: namespace.Name}}
+	roleBinding := &rbacv1.RoleBinding{Name: role.Name, Namespace: namespace.Name}
 	if _, err := controllerutil.CreateOrPatch(ctx, c, roleBinding, func() error {
 		roleBinding.Subjects = []rbacv1.Subject{{
 			APIGroup: rbacv1.GroupName,
@@ -141,7 +141,7 @@ func ReconcileGardenerProjectResources(ctx context.Context, c client.Client, cfg
 
 	// Create the ResourceQuota with the default shoot quota, but only on initial creation.
 	// Limes manages the quota value after that via SetQuota, so we must not overwrite it on subsequent calls.
-	rq := &corev1.ResourceQuota{ObjectMeta: metav1.ObjectMeta{Name: constants.ResourceQuotaName, Namespace: namespace.Name}}
+	rq := &corev1.ResourceQuota{Name: constants.ResourceQuotaName, Namespace: namespace.Name}
 	if _, err := controllerutil.CreateOrPatch(ctx, c, rq, func() error {
 		if rq.CreationTimestamp.IsZero() {
 			if rq.Spec.Hard == nil {
@@ -180,20 +180,18 @@ func GetApplicationCredentialInternalSecretName(projectID, shootName, applicatio
 // the Shoot and the OpenStack environment.
 func ApplicationCredentialsInternalSecret(shoot *gardenercorev1beta1.Shoot, openStackUserInfo OpenStackUserInfo, applicationCredential *applicationcredentials.ApplicationCredential) *gardenercorev1beta1.InternalSecret {
 	return &gardenercorev1beta1.InternalSecret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      GetApplicationCredentialInternalSecretName(openStackUserInfo.ProjectID, shoot.Name, applicationCredential.Name),
-			Namespace: shoot.Namespace,
-			Annotations: map[string]string{
-				constants.AnnotationKeyExpiresAt: applicationCredential.ExpiresAt.UTC().Format(time.RFC3339),
-			},
-			Labels: map[string]string{
-				constants.LabelKeyOpenStackDomainID:    openStackUserInfo.ProjectDomainID,
-				constants.LabelKeyOpenStackDomainName:  sanitizeLabelValue(openStackUserInfo.ProjectDomainName),
-				constants.LabelKeyOpenStackProjectID:   openStackUserInfo.ProjectID,
-				constants.LabelKeyOpenStackProjectName: sanitizeLabelValue(openStackUserInfo.ProjectName),
-				constants.LabelKeyOpenStackRegion:      openStackUserInfo.Region,
-				constants.LabelKeyShootName:            shoot.Name,
-			},
+		Name:      GetApplicationCredentialInternalSecretName(openStackUserInfo.ProjectID, shoot.Name, applicationCredential.Name),
+		Namespace: shoot.Namespace,
+		Annotations: map[string]string{
+			constants.AnnotationKeyExpiresAt: applicationCredential.ExpiresAt.UTC().Format(time.RFC3339),
+		},
+		Labels: map[string]string{
+			constants.LabelKeyOpenStackDomainID:    openStackUserInfo.ProjectDomainID,
+			constants.LabelKeyOpenStackDomainName:  sanitizeLabelValue(openStackUserInfo.ProjectDomainName),
+			constants.LabelKeyOpenStackProjectID:   openStackUserInfo.ProjectID,
+			constants.LabelKeyOpenStackProjectName: sanitizeLabelValue(openStackUserInfo.ProjectName),
+			constants.LabelKeyOpenStackRegion:      openStackUserInfo.Region,
+			constants.LabelKeyShootName:            shoot.Name,
 		},
 		Type:      corev1.SecretTypeOpaque,
 		Immutable: new(true),
@@ -209,10 +207,8 @@ func ApplicationCredentialsInternalSecret(shoot *gardenercorev1beta1.Shoot, open
 // CredentialsBindingForSecret creates a new CredentialsBinding for the given Shoot and InternalSecret.
 func CredentialsBindingForSecret(shoot *gardenercorev1beta1.Shoot, internalSecret *gardenercorev1beta1.InternalSecret) *gardenersecurityv1alpha1.CredentialsBinding {
 	return &gardenersecurityv1alpha1.CredentialsBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      internalSecret.Name,
-			Namespace: shoot.Namespace,
-		},
+		Name:      internalSecret.Name,
+		Namespace: shoot.Namespace,
 		Provider: gardenersecurityv1alpha1.CredentialsBindingProvider{
 			Type: constants.GardenerProviderType,
 		},

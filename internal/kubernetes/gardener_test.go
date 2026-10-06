@@ -16,7 +16,6 @@ import (
 	. "github.com/onsi/gomega/gstruct"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -81,7 +80,7 @@ var _ = Describe("Gardener", func() {
 		It("should create a new project namespace", func() {
 			Expect(ReconcileGardenerProjectResources(ctx, fakeClient, cfg, openStackUserInfo)).To(Succeed())
 
-			namespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "garden-" + openStackUserInfo.Region + "-" + openStackUserInfo.ProjectID}}
+			namespace := &corev1.Namespace{Name: "garden-" + openStackUserInfo.Region + "-" + openStackUserInfo.ProjectID}
 			projectName := GetGardenerProjectName(openStackUserInfo.Region, openStackUserInfo.ProjectID, cfg.LandscapeName)
 
 			Expect(fakeClient.Get(ctx, client.ObjectKeyFromObject(namespace), namespace)).NotTo(HaveOccurred())
@@ -96,11 +95,9 @@ var _ = Describe("Gardener", func() {
 
 		It("should reconcile an existing project namespace", func() {
 			namespace := &corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: GetGardenerProjectNamespaceName(openStackUserInfo.Region, openStackUserInfo.ProjectID),
-					Labels: map[string]string{
-						"existing-label": "existing-value",
-					},
+				Name: GetGardenerProjectNamespaceName(openStackUserInfo.Region, openStackUserInfo.ProjectID),
+				Labels: map[string]string{
+					"existing-label": "existing-value",
 				},
 			}
 			Expect(fakeClient.Create(ctx, namespace)).To(Succeed())
@@ -125,7 +122,7 @@ var _ = Describe("Gardener", func() {
 
 			projectName := GetGardenerProjectName(openStackUserInfo.Region, openStackUserInfo.ProjectID, cfg.LandscapeName)
 
-			project := &gardenercorev1beta1.Project{ObjectMeta: metav1.ObjectMeta{Name: projectName}}
+			project := &gardenercorev1beta1.Project{Name: projectName}
 			Expect(fakeClient.Get(ctx, client.ObjectKeyFromObject(project), project)).NotTo(HaveOccurred())
 			Expect(project.Spec.Namespace).To(PointTo(Equal("garden-" + openStackUserInfo.Region + "-" + openStackUserInfo.ProjectID)))
 		})
@@ -134,9 +131,7 @@ var _ = Describe("Gardener", func() {
 			projectName := GetGardenerProjectName(openStackUserInfo.Region, openStackUserInfo.ProjectID, cfg.LandscapeName)
 
 			project := &gardenercorev1beta1.Project{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: projectName,
-				},
+				Name: projectName,
 				Spec: gardenercorev1beta1.ProjectSpec{
 					Namespace: new("old-namespace"),
 				},
@@ -153,10 +148,8 @@ var _ = Describe("Gardener", func() {
 			Expect(ReconcileGardenerProjectResources(ctx, fakeClient, cfg, openStackUserInfo)).To(Succeed())
 
 			role := &rbacv1.Role{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "persephone.sci.cloud.sap:openstack-project-kubernetes-admin",
-					Namespace: "garden-" + openStackUserInfo.Region + "-" + openStackUserInfo.ProjectID,
-				},
+				Name:      "persephone.sci.cloud.sap:openstack-project-kubernetes-admin",
+				Namespace: "garden-" + openStackUserInfo.Region + "-" + openStackUserInfo.ProjectID,
 			}
 			Expect(fakeClient.Get(ctx, client.ObjectKeyFromObject(role), role)).NotTo(HaveOccurred())
 			Expect(role.Rules).To(HaveExactElements(
@@ -185,10 +178,8 @@ var _ = Describe("Gardener", func() {
 
 		It("should reconcile an existing role", func() {
 			role := &rbacv1.Role{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "persephone.sci.cloud.sap:openstack-project-kubernetes-admin",
-					Namespace: "garden-" + openStackUserInfo.Region + "-" + openStackUserInfo.ProjectID,
-				},
+				Name:      "persephone.sci.cloud.sap:openstack-project-kubernetes-admin",
+				Namespace: "garden-" + openStackUserInfo.Region + "-" + openStackUserInfo.ProjectID,
 				Rules: []rbacv1.PolicyRule{
 					{
 						APIGroups: []string{"old-api-group"},
@@ -230,10 +221,8 @@ var _ = Describe("Gardener", func() {
 			Expect(ReconcileGardenerProjectResources(ctx, fakeClient, cfg, openStackUserInfo)).To(Succeed())
 
 			roleBinding := &rbacv1.RoleBinding{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "persephone.sci.cloud.sap:openstack-project-kubernetes-admin",
-					Namespace: "garden-" + openStackUserInfo.Region + "-" + openStackUserInfo.ProjectID,
-				},
+				Name:      "persephone.sci.cloud.sap:openstack-project-kubernetes-admin",
+				Namespace: "garden-" + openStackUserInfo.Region + "-" + openStackUserInfo.ProjectID,
 			}
 			Expect(fakeClient.Get(ctx, client.ObjectKeyFromObject(roleBinding), roleBinding)).NotTo(HaveOccurred())
 			Expect(roleBinding.Subjects).To(HaveExactElements(rbacv1.Subject{
@@ -252,7 +241,7 @@ var _ = Describe("Gardener", func() {
 			Expect(ReconcileGardenerProjectResources(ctx, fakeClient, cfg, openStackUserInfo)).To(Succeed())
 
 			projectName := GetGardenerProjectName(openStackUserInfo.Region, openStackUserInfo.ProjectID, cfg.LandscapeName)
-			project := &gardenercorev1beta1.Project{ObjectMeta: metav1.ObjectMeta{Name: projectName}}
+			project := &gardenercorev1beta1.Project{Name: projectName}
 			Expect(fakeClient.Get(ctx, client.ObjectKeyFromObject(project), project)).NotTo(HaveOccurred())
 			for k := range project.Labels {
 				Expect(k).NotTo(HavePrefix("sci.cloud.sap/"), "Project.Labels must not contain OpenStack labels — they belong on the Namespace")
@@ -261,10 +250,8 @@ var _ = Describe("Gardener", func() {
 
 		It("should reconcile an existing rolebinding", func() {
 			roleBinding := &rbacv1.RoleBinding{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "persephone.sci.cloud.sap:openstack-project-kubernetes-admin",
-					Namespace: "garden-" + openStackUserInfo.Region + "-" + openStackUserInfo.ProjectID,
-				},
+				Name:      "persephone.sci.cloud.sap:openstack-project-kubernetes-admin",
+				Namespace: "garden-" + openStackUserInfo.Region + "-" + openStackUserInfo.ProjectID,
 				Subjects: []rbacv1.Subject{{
 					APIGroup: "rbac.authorization.k8s.io",
 					Kind:     "Group",
@@ -319,10 +306,8 @@ var _ = Describe("Gardener", func() {
 
 		BeforeEach(func() {
 			shoot = &gardenercorev1beta1.Shoot{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-shoot",
-					Namespace: "garden-1234567890123456",
-				},
+				Name:      "test-shoot",
+				Namespace: "garden-1234567890123456",
 			}
 
 			openStackUserInfo = OpenStackUserInfo{
@@ -391,17 +376,13 @@ var _ = Describe("Gardener", func() {
 
 		BeforeEach(func() {
 			shoot = &gardenercorev1beta1.Shoot{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-shoot",
-					Namespace: "garden-1234567890123456",
-				},
+				Name:      "test-shoot",
+				Namespace: "garden-1234567890123456",
 			}
 
 			internalSecret = &gardenercorev1beta1.InternalSecret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-shoot-1234567890123456-shoot-2025-12-15",
-					Namespace: "garden-1234567890123456",
-				},
+				Name:      "test-shoot-1234567890123456-shoot-2025-12-15",
+				Namespace: "garden-1234567890123456",
 			}
 		})
 

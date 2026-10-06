@@ -20,7 +20,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -152,10 +151,8 @@ func (l *Logic) SetQuota(ctx context.Context, projectUUID string, req liquid.Ser
 	}
 
 	rq := &corev1.ResourceQuota{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.ResourceQuotaName,
-			Namespace: namespace,
-		},
+		Name:      constants.ResourceQuotaName,
+		Namespace: namespace,
 	}
 
 	_, err := controllerutil.CreateOrPatch(ctx, l.kubeClient, rq, func() error {

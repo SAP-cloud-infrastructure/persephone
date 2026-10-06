@@ -56,19 +56,15 @@ func AddToManager(ctx context.Context, mgr manager.Manager, cfg config.Persephon
 // GetMutatingWebhookConfiguration returns the webhook configuration for the given mode and URL.
 func GetMutatingWebhookConfiguration() *admissionregistrationv1.MutatingWebhookConfiguration {
 	return &admissionregistrationv1.MutatingWebhookConfiguration{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "persephone-webhook",
-		},
+		Name: "persephone-webhook",
 		Webhooks: []admissionregistrationv1.MutatingWebhook{{
 			Name:                    "shoot-admission.webhook.persephone.sci.cloud.sap",
 			ClientConfig:            getClientConfig(shootadmission.WebhookPath),
 			AdmissionReviewVersions: []string{"v1"},
 			Rules: []admissionregistrationv1.RuleWithOperations{{
-				Rule: admissionregistrationv1.Rule{
-					APIGroups:   []string{gardenercorev1beta1.SchemeGroupVersion.Group},
-					APIVersions: []string{gardenercorev1beta1.SchemeGroupVersion.Version},
-					Resources:   []string{"shoots"},
-				},
+				APIGroups:   []string{gardenercorev1beta1.SchemeGroupVersion.Group},
+				APIVersions: []string{gardenercorev1beta1.SchemeGroupVersion.Version},
+				Resources:   []string{"shoots"},
 				Operations: []admissionregistrationv1.OperationType{
 					admissionregistrationv1.Create,
 				},

@@ -13,7 +13,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -40,11 +39,9 @@ var _ = Describe("Reloader", func() {
 	Describe("Reconcile", func() {
 		It("should write certificate files to disk", func() {
 			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "test-cert",
-					Namespace:       "default",
-					ResourceVersion: "1",
-				},
+				Name:            "test-cert",
+				Namespace:       "default",
+				ResourceVersion: "1",
 				Data: map[string][]byte{
 					secretsutils.DataKeyCertificate:   []byte("server-cert-pem"),
 					secretsutils.DataKeyPrivateKey:    []byte("server-key-pem"),
@@ -72,11 +69,9 @@ var _ = Describe("Reloader", func() {
 
 		It("should skip writing when resource version is unchanged", func() {
 			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "test-cert",
-					Namespace:       "default",
-					ResourceVersion: "42",
-				},
+				Name:            "test-cert",
+				Namespace:       "default",
+				ResourceVersion: "42",
 				Data: map[string][]byte{
 					secretsutils.DataKeyCertificate:   []byte("server-cert-pem"),
 					secretsutils.DataKeyPrivateKey:    []byte("server-key-pem"),
@@ -105,11 +100,9 @@ var _ = Describe("Reloader", func() {
 
 		It("should write when resource version changes", func() {
 			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "test-cert",
-					Namespace:       "default",
-					ResourceVersion: "43",
-				},
+				Name:            "test-cert",
+				Namespace:       "default",
+				ResourceVersion: "43",
 				Data: map[string][]byte{
 					secretsutils.DataKeyCertificate:   []byte("new-cert"),
 					secretsutils.DataKeyPrivateKey:    []byte("new-key"),
@@ -137,11 +130,9 @@ var _ = Describe("Reloader", func() {
 
 		It("should return error when secret data is empty", func() {
 			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "test-cert",
-					Namespace:       "default",
-					ResourceVersion: "1",
-				},
+				Name:            "test-cert",
+				Namespace:       "default",
+				ResourceVersion: "1",
 				Data: map[string][]byte{
 					secretsutils.DataKeyCertificate:   {},
 					secretsutils.DataKeyPrivateKey:    []byte("key"),

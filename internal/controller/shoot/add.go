@@ -15,8 +15,6 @@ import (
 	predicateutils "github.com/gardener/gardener/pkg/controllerutils/predicate"
 	"github.com/go-logr/logr"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/clock"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -73,13 +71,13 @@ func (r *Reconciler) MapCredentialsBindingToShoot(log logr.Logger) handler.MapFu
 			return nil
 		}
 
-		internalSecret := &gardenercorev1beta1.InternalSecret{ObjectMeta: metav1.ObjectMeta{Name: credentialsBinding.CredentialsRef.Name, Namespace: credentialsBinding.CredentialsRef.Namespace}}
+		internalSecret := &gardenercorev1beta1.InternalSecret{Name: credentialsBinding.CredentialsRef.Name, Namespace: credentialsBinding.CredentialsRef.Namespace}
 		if err := r.Client.Get(ctx, client.ObjectKeyFromObject(internalSecret), internalSecret); err != nil {
 			log.Error(err, "Failed to get InternalSecret referenced in CredentialsBinding", "internalSecret", client.ObjectKeyFromObject(internalSecret))
 			return nil
 		}
 
-		return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: internalSecret.Labels[constants.LabelKeyShootName], Namespace: internalSecret.Namespace}}}
+		return []reconcile.Request{{Name: internalSecret.Labels[constants.LabelKeyShootName], Namespace: internalSecret.Namespace}}
 	}
 }
 
@@ -91,7 +89,7 @@ func (r *Reconciler) MapInternalSecretToShoot() handler.MapFunc {
 			return nil
 		}
 
-		return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: internalSecret.Labels[constants.LabelKeyShootName], Namespace: internalSecret.Namespace}}}
+		return []reconcile.Request{{Name: internalSecret.Labels[constants.LabelKeyShootName], Namespace: internalSecret.Namespace}}
 	}
 }
 

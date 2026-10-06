@@ -28,8 +28,8 @@ var _ = Describe("ClusterUserClientSet", func() {
 					UserName: "user-id",
 				}
 				clusterUserClientSet = &ClusterUserClientSet{
-					ClientSet: ClientSet{IdentityClient: GetTestIdentityClient(GinkgoT())},
-					User:      &users.User{ID: FakeE2EOptions.UserName, Name: FakeE2EOptions.UserName},
+					IdentityClient: GetTestIdentityClient(GinkgoT()),
+					User:           &users.User{ID: FakeE2EOptions.UserName, Name: FakeE2EOptions.UserName},
 				}
 			})
 
@@ -51,8 +51,8 @@ var _ = Describe("ClusterUserClientSet", func() {
 					UserName: "user-id",
 				}
 				clusterUserClientSet = &ClusterUserClientSet{
-					ClientSet: ClientSet{IdentityClient: GetTestIdentityClient(GinkgoT())},
-					User:      &users.User{ID: FakeE2EOptions.UserName, Name: FakeE2EOptions.UserName},
+					IdentityClient: GetTestIdentityClient(GinkgoT()),
+					User:           &users.User{ID: FakeE2EOptions.UserName, Name: FakeE2EOptions.UserName},
 				}
 			})
 
@@ -83,8 +83,8 @@ var _ = Describe("ClusterUserClientSet", func() {
 					UserName: "user-id",
 				}
 				clusterUserClientSet = &ClusterUserClientSet{
-					ClientSet: ClientSet{IdentityClient: GetTestIdentityClient(GinkgoT())},
-					User:      &users.User{ID: FakeE2EOptions.UserName, Name: FakeE2EOptions.UserName},
+					IdentityClient: GetTestIdentityClient(GinkgoT()),
+					User:           &users.User{ID: FakeE2EOptions.UserName, Name: FakeE2EOptions.UserName},
 				}
 			})
 
@@ -109,8 +109,8 @@ var _ = Describe("ClusterUserClientSet", func() {
 					UserName: "user-id",
 				}
 				clusterUserClientSet = &ClusterUserClientSet{
-					ClientSet: ClientSet{IdentityClient: GetTestIdentityClient(GinkgoT())},
-					User:      &users.User{ID: FakeE2EOptions.UserName, Name: FakeE2EOptions.UserName},
+					IdentityClient: GetTestIdentityClient(GinkgoT()),
+					User:           &users.User{ID: FakeE2EOptions.UserName, Name: FakeE2EOptions.UserName},
 				}
 			})
 

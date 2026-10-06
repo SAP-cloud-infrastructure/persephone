@@ -66,10 +66,8 @@ var _ = Describe("Handler", func() {
 	Describe("ServeHTTP", func() {
 		It("should process valid Shoot create event", func() {
 			shoot := &gardenercorev1beta1.Shoot{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-shoot",
-					Namespace: "garden-test",
-				},
+				Name:      "test-shoot",
+				Namespace: "garden-test",
 				Spec: gardenercorev1beta1.ShootSpec{
 					Region: "qa-de-1",
 				},

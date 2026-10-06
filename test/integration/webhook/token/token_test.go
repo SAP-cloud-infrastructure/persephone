@@ -157,7 +157,7 @@ var _ = Describe("Token tests", func() {
 
 func newOpenStackUserClient(token string) client.Client {
 	openStackUserRestConfig := &rest.Config{
-		Host: testRestConfig.Host, TLSClientConfig: rest.TLSClientConfig{CAData: testRestConfig.CAData},
+		Host: testRestConfig.Host, CAData: testRestConfig.CAData,
 		QPS: 1000.0, Burst: 2000.0,
 		BearerToken: token,
 	}

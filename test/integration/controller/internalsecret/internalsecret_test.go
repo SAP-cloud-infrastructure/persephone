@@ -14,7 +14,6 @@ import (
 	. "github.com/gardener/gardener/pkg/utils/test/matchers"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/sap-cloud-infrastructure/persephone/internal/constants"
@@ -31,11 +30,9 @@ var _ = Describe("InternalSecret Controller Integration Tests", func() {
 		fakeClock.SetTime(time.Now())
 
 		shoot = &gardenercorev1beta1.Shoot{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-shoot-" + testRunID,
-				Namespace: testNamespace.Name,
-				Labels:    map[string]string{testID: testRunID},
-			},
+			Name:      "test-shoot-" + testRunID,
+			Namespace: testNamespace.Name,
+			Labels:    map[string]string{testID: testRunID},
 			Spec: gardenercorev1beta1.ShootSpec{
 				CloudProfile: &gardenercorev1beta1.CloudProfileReference{Kind: "CloudProfile", Name: "test"},
 				Region:       "test-region",
@@ -60,20 +57,18 @@ var _ = Describe("InternalSecret Controller Integration Tests", func() {
 		}
 
 		testInternalSecret = &gardenercorev1beta1.InternalSecret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-creds-" + testRunID + "-" + time.Now().Format("150405.000"),
-				Namespace: testNamespace.Name,
-				Annotations: map[string]string{
-					"secret.persephone.sci.cloud.sap/expires-at": time.Now().Add(24 * 60 * time.Hour).Format(time.RFC3339),
-				},
-				Labels: map[string]string{
-					"persephone.sci.cloud.sap/shoot-name": shoot.Name,
-					"sci.cloud.sap/region":                "test-region",
-					"sci.cloud.sap/domain-name":           "test-domain",
-					"sci.cloud.sap/domain-id":             "test-domain-id",
-					"sci.cloud.sap/project-name":          "test-project",
-					"sci.cloud.sap/project-id":            "test-project-id",
-				},
+			Name:      "test-creds-" + testRunID + "-" + time.Now().Format("150405.000"),
+			Namespace: testNamespace.Name,
+			Annotations: map[string]string{
+				"secret.persephone.sci.cloud.sap/expires-at": time.Now().Add(24 * 60 * time.Hour).Format(time.RFC3339),
+			},
+			Labels: map[string]string{
+				"persephone.sci.cloud.sap/shoot-name": shoot.Name,
+				"sci.cloud.sap/region":                "test-region",
+				"sci.cloud.sap/domain-name":           "test-domain",
+				"sci.cloud.sap/domain-id":             "test-domain-id",
+				"sci.cloud.sap/project-name":          "test-project",
+				"sci.cloud.sap/project-id":            "test-project-id",
 			},
 			Data: map[string][]byte{
 				"applicationCredentialID":     []byte("test-cred-id"),
@@ -161,10 +156,8 @@ var _ = Describe("InternalSecret Controller Integration Tests", func() {
 			By("Verify CredentialsBinding is still created even though Shoot doesn't exist")
 			Eventually(func(g Gomega) {
 				credentialsBinding := &gardenersecurityv1alpha1.CredentialsBinding{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      testInternalSecret.Name,
-						Namespace: shoot.Namespace,
-					},
+					Name:      testInternalSecret.Name,
+					Namespace: shoot.Namespace,
 				}
 				g.Expect(testClient.Get(ctx, client.ObjectKeyFromObject(credentialsBinding), credentialsBinding)).To(Succeed())
 				g.Expect(credentialsBinding.Provider.Type).To(Equal("openstack"))
@@ -257,10 +250,8 @@ var _ = Describe("InternalSecret Controller Integration Tests", func() {
 			By("Verify CredentialsBinding is created")
 			Eventually(func(g Gomega) {
 				credentialsBinding := &gardenersecurityv1alpha1.CredentialsBinding{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      testInternalSecret.Name,
-						Namespace: shoot.Namespace,
-					},
+					Name:      testInternalSecret.Name,
+					Namespace: shoot.Namespace,
 				}
 				g.Expect(testClient.Get(ctx, client.ObjectKeyFromObject(credentialsBinding), credentialsBinding)).To(Succeed())
 				g.Expect(credentialsBinding.Provider.Type).To(Equal("openstack"))
@@ -287,10 +278,8 @@ var _ = Describe("InternalSecret Controller Integration Tests", func() {
 			}).Should(Succeed())
 
 			credentialsBinding = &gardenersecurityv1alpha1.CredentialsBinding{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      testInternalSecret.Name,
-					Namespace: shoot.Namespace,
-				},
+				Name:      testInternalSecret.Name,
+				Namespace: shoot.Namespace,
 			}
 			Eventually(func() error {
 				return testClient.Get(ctx, client.ObjectKeyFromObject(credentialsBinding), credentialsBinding)
@@ -378,13 +367,13 @@ var _ = Describe("InternalSecret Controller Integration Tests", func() {
 		It("should create CredentialsBinding for each InternalSecret", func() {
 			By("Verify CredentialsBinding for older InternalSecret")
 			Eventually(func(g Gomega) {
-				credentialsBinding := &gardenersecurityv1alpha1.CredentialsBinding{ObjectMeta: metav1.ObjectMeta{Name: olderInternalSecret.Name, Namespace: shoot.Namespace}}
+				credentialsBinding := &gardenersecurityv1alpha1.CredentialsBinding{Name: olderInternalSecret.Name, Namespace: shoot.Namespace}
 				g.Expect(testClient.Get(ctx, client.ObjectKeyFromObject(credentialsBinding), credentialsBinding)).To(Succeed())
 			}).Should(Succeed())
 
 			By("Verify CredentialsBinding for newer InternalSecret")
 			Eventually(func(g Gomega) {
-				credentialsBinding := &gardenersecurityv1alpha1.CredentialsBinding{ObjectMeta: metav1.ObjectMeta{Name: newerInternalSecret.Name, Namespace: shoot.Namespace}}
+				credentialsBinding := &gardenersecurityv1alpha1.CredentialsBinding{Name: newerInternalSecret.Name, Namespace: shoot.Namespace}
 				g.Expect(testClient.Get(ctx, client.ObjectKeyFromObject(credentialsBinding), credentialsBinding)).To(Succeed())
 			}).Should(Succeed())
 		})

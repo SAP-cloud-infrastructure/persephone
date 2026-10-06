@@ -205,14 +205,12 @@ func NewClusterUserClientSet(ctx context.Context, clientSet *ClientSet, username
 	}
 
 	return &ClusterUserClientSet{
-		ClientSet: ClientSet{
-			ProviderClient: providerClient,
-			IdentityClient: identityClient,
-			NetworkClient:  networkClient,
-			DomainID:       clientSet.DomainID,
-		},
-		ProjectID: projectID,
-		User:      user,
+		ProviderClient: providerClient,
+		IdentityClient: identityClient,
+		NetworkClient:  networkClient,
+		DomainID:       clientSet.DomainID,
+		ProjectID:      projectID,
+		User:           user,
 	}, nil
 }
 

@@ -14,7 +14,6 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -167,11 +166,9 @@ var _ = Describe("Reconciler", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			existingSecret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-cert",
-					Namespace: "default",
-				},
-				Data: data,
+				Name:      "test-cert",
+				Namespace: "default",
+				Data:      data,
 			}
 			fakeClient := fake.NewClientBuilder().WithObjects(existingSecret).Build()
 			rec = &reconciler{
@@ -195,10 +192,8 @@ var _ = Describe("Reconciler", func() {
 
 		It("should rotate when the secret has invalid cert data", func() {
 			existingSecret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-cert",
-					Namespace: "default",
-				},
+				Name:      "test-cert",
+				Namespace: "default",
 				Data: map[string][]byte{
 					secretsutils.DataKeyCertificateCA: []byte("invalid"),
 				},
@@ -229,10 +224,8 @@ var _ = Describe("Reconciler", func() {
 	Describe("generateAndCreateSecret", func() {
 		It("should fail if secret already exists", func() {
 			existingSecret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-cert",
-					Namespace: "default",
-				},
+				Name:      "test-cert",
+				Namespace: "default",
 			}
 			fakeClient := fake.NewClientBuilder().WithObjects(existingSecret).Build()
 			rec = &reconciler{
@@ -265,11 +258,9 @@ var _ = Describe("Reconciler", func() {
 			originalCACert := parseCert(data[secretsutils.DataKeyCertificateCA])
 
 			existingSecret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-cert",
-					Namespace: "default",
-				},
-				Data: data,
+				Name:      "test-cert",
+				Namespace: "default",
+				Data:      data,
 			}
 			fakeClient := fake.NewClientBuilder().WithObjects(existingSecret).Build()
 			rec.client = fakeClient
@@ -318,11 +309,9 @@ var _ = Describe("Reconciler", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			existingSecret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-cert",
-					Namespace: "default",
-				},
-				Data: data,
+				Name:      "test-cert",
+				Namespace: "default",
+				Data:      data,
 			}
 			fakeClient := fake.NewClientBuilder().WithObjects(existingSecret).Build()
 			rec.client = fakeClient
@@ -354,11 +343,9 @@ var _ = Describe("Reconciler", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			existingSecret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-cert",
-					Namespace: "default",
-				},
-				Data: data,
+				Name:      "test-cert",
+				Namespace: "default",
+				Data:      data,
 			}
 			fakeClient := fake.NewClientBuilder().WithObjects(existingSecret).Build()
 			rec.client = fakeClient

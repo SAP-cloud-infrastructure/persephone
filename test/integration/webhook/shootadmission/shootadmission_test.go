@@ -37,11 +37,9 @@ var _ = Describe("ShootAdmission tests", func() {
 
 	BeforeEach(OncePerOrdered, func() {
 		shoot = &gardenercorev1beta1.Shoot{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-shoot",
-				Namespace: testNamespace.Name,
-				Labels:    map[string]string{testID: testRunID},
-			},
+			Name:      "test-shoot",
+			Namespace: testNamespace.Name,
+			Labels:    map[string]string{testID: testRunID},
 			Spec: gardenercorev1beta1.ShootSpec{
 				Provider: gardenercorev1beta1.Provider{
 					Workers: []gardenercorev1beta1.Worker{{
@@ -74,11 +72,9 @@ var _ = Describe("ShootAdmission tests", func() {
 	It("should fail mutating the Shoot when there are no external networks", func() {
 		DeferCleanup(test.WithVar(&shootadmission.NewClusterUserClientSet, func(_ context.Context, adminClient *openstack.ClientSet, username, projectID string) (*openstack.ClusterUserClientSet, error) {
 			return &openstack.ClusterUserClientSet{
-				User: &users.User{ID: "fake-user-id"},
-				ClientSet: openstack.ClientSet{
-					IdentityClient: newFakeIdentityClient(),
-					NetworkClient:  newFakeNetworkClient(0),
-				},
+				User:           &users.User{ID: "fake-user-id"},
+				IdentityClient: newFakeIdentityClient(),
+				NetworkClient:  newFakeNetworkClient(0),
 			}, nil
 		}))
 
@@ -89,11 +85,9 @@ var _ = Describe("ShootAdmission tests", func() {
 	It("should fail mutating the Shoot when there are multiple external networks", func() {
 		DeferCleanup(test.WithVar(&shootadmission.NewClusterUserClientSet, func(_ context.Context, adminClient *openstack.ClientSet, username, projectID string) (*openstack.ClusterUserClientSet, error) {
 			return &openstack.ClusterUserClientSet{
-				User: &users.User{ID: "fake-user-id"},
-				ClientSet: openstack.ClientSet{
-					IdentityClient: newFakeIdentityClient(),
-					NetworkClient:  newFakeNetworkClient(2),
-				},
+				User:           &users.User{ID: "fake-user-id"},
+				IdentityClient: newFakeIdentityClient(),
+				NetworkClient:  newFakeNetworkClient(2),
 			}, nil
 		}))
 
@@ -107,11 +101,9 @@ var _ = Describe("ShootAdmission tests", func() {
 		It("should succeed with Shoot creation", func() {
 			DeferCleanup(test.WithVar(&shootadmission.NewClusterUserClientSet, func(_ context.Context, adminClient *openstack.ClientSet, username, projectID string) (*openstack.ClusterUserClientSet, error) {
 				return &openstack.ClusterUserClientSet{
-					User: &users.User{ID: "fake-user-id"},
-					ClientSet: openstack.ClientSet{
-						IdentityClient: newFakeIdentityClient(),
-						NetworkClient:  newFakeNetworkClient(1),
-					},
+					User:           &users.User{ID: "fake-user-id"},
+					IdentityClient: newFakeIdentityClient(),
+					NetworkClient:  newFakeNetworkClient(1),
 				}, nil
 			}))
 
@@ -191,11 +183,9 @@ var _ = Describe("ShootAdmission tests", func() {
 		It("should succeed with Shoot creation", func() {
 			DeferCleanup(test.WithVar(&shootadmission.NewClusterUserClientSet, func(_ context.Context, adminClient *openstack.ClientSet, username, projectID string) (*openstack.ClusterUserClientSet, error) {
 				return &openstack.ClusterUserClientSet{
-					User: &users.User{ID: "fake-user-id"},
-					ClientSet: openstack.ClientSet{
-						IdentityClient: newFakeIdentityClient(),
-						NetworkClient:  newFakeNetworkClient(1),
-					},
+					User:           &users.User{ID: "fake-user-id"},
+					IdentityClient: newFakeIdentityClient(),
+					NetworkClient:  newFakeNetworkClient(1),
 				}, nil
 			}))
 
@@ -254,11 +244,9 @@ var _ = Describe("ShootAdmission tests", func() {
 		BeforeAll(func() {
 			DeferCleanup(test.WithVar(&shootadmission.NewClusterUserClientSet, func(_ context.Context, adminClient *openstack.ClientSet, username, projectID string) (*openstack.ClusterUserClientSet, error) {
 				return &openstack.ClusterUserClientSet{
-					User: &users.User{ID: "fake-user-id"},
-					ClientSet: openstack.ClientSet{
-						IdentityClient: newFakeIdentityClient(),
-						NetworkClient:  newFakeNetworkClient(1),
-					},
+					User:           &users.User{ID: "fake-user-id"},
+					IdentityClient: newFakeIdentityClient(),
+					NetworkClient:  newFakeNetworkClient(1),
 				}, nil
 			}))
 		})
@@ -304,20 +292,16 @@ var _ = Describe("ShootAdmission tests", func() {
 		BeforeAll(func() {
 			DeferCleanup(test.WithVar(&shootadmission.NewClusterUserClientSet, func(_ context.Context, adminClient *openstack.ClientSet, username, projectID string) (*openstack.ClusterUserClientSet, error) {
 				return &openstack.ClusterUserClientSet{
-					User: &users.User{ID: "fake-user-id"},
-					ClientSet: openstack.ClientSet{
-						IdentityClient: newFakeIdentityClient(),
-						NetworkClient:  newFakeNetworkClient(1),
-					},
+					User:           &users.User{ID: "fake-user-id"},
+					IdentityClient: newFakeIdentityClient(),
+					NetworkClient:  newFakeNetworkClient(1),
 				}, nil
 			}))
 
 			workerlessShoot = &gardenercorev1beta1.Shoot{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-workerless-shoot",
-					Namespace: testNamespace.Name,
-					Labels:    map[string]string{testID: testRunID},
-				},
+				Name:      "test-workerless-shoot",
+				Namespace: testNamespace.Name,
+				Labels:    map[string]string{testID: testRunID},
 				Spec: gardenercorev1beta1.ShootSpec{
 					Provider: gardenercorev1beta1.Provider{
 						Workers: []gardenercorev1beta1.Worker{}, // Empty workers list makes it workerless

@@ -190,10 +190,8 @@ func Do(ctx context.Context, authOptions gophercloud.AuthOptions, noRegionPrefix
 
 	expiresAt := meta_v1.NewTime(token.ExpiresAt)
 	cred := &v1.ExecCredential{
-		TypeMeta: meta_v1.TypeMeta{
-			Kind:       "ExecCredential",
-			APIVersion: "client.authentication.k8s.io/v1",
-		},
+		Kind:       "ExecCredential",
+		APIVersion: "client.authentication.k8s.io/v1",
 		Spec: v1.ExecCredentialSpec{
 			Interactive: false,
 		},

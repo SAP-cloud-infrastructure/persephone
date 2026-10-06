@@ -31,11 +31,9 @@ var _ = Describe("shootRelevantUpdatePredicate", func() {
 
 	baseShoot := func() *gardenercorev1beta1.Shoot {
 		return &gardenercorev1beta1.Shoot{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:       "test-shoot",
-				Namespace:  "garden-test",
-				Generation: 1,
-			},
+			Name:       "test-shoot",
+			Namespace:  "garden-test",
+			Generation: 1,
 			Status: gardenercorev1beta1.ShootStatus{
 				Conditions: []gardenercorev1beta1.Condition{
 					{Type: "Ready", Status: "True"},
