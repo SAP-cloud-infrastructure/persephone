@@ -14,10 +14,10 @@ require (
 	github.com/onsi/gomega v1.40.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/sapcc/go-api-declarations v1.25.1
-	github.com/sapcc/go-bits v0.0.0-20261005151228-62a588a6b663
+	github.com/sapcc/go-bits v0.0.0-20261008092946-7e1776f25e27
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
-	go.xyrillian.de/gg v1.17.0
+	go.xyrillian.de/gg v1.19.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.34.5
 	k8s.io/apimachinery v0.34.5
