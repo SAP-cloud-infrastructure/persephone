@@ -141,6 +141,7 @@ func GetDefaultServiceUserRoles() []string {
 		"member",
 		"network_admin",
 		"objectstore_admin",
+		"sharedfilesystem_admin",
 		"volume_admin",
 	}
 }
