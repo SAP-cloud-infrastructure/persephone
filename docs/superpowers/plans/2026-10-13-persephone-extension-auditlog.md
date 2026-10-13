@@ -1970,40 +1970,137 @@ git commit -m "feat(extension): add persephone-extension binary"
 
 ---
 
-### Task 10: Dockerfile and deployment manifests
+### Task 10: Add new binaries to Dockerfile and Makefile.maker.yaml
+
+All persephone binaries are built in a single Docker image (see existing `Dockerfile` — all binaries land at `/usr/bin/` via `make install`, individual Deployments override the entrypoint). The new binaries follow the same pattern.
 
 **Files:**
-- Modify: `Dockerfile` — add build stages for new binaries
-- Create: `config/manifests/deployment-extension.yaml`
-- Create: `config/manifests/deployment-auditlog-receiver.yaml`
-- Create: `config/manifests/service-auditlog-receiver.yaml`
-- Create: `config/manifests/rbac-extension.yaml`
-- Create: `config/manifests/controllerregistration-auditlog.yaml`
+- Modify: `Makefile.maker.yaml` — add `persephone-extension` and `persephone-auditlog-receiver` to the `binaries` list
+- Modify: `Dockerfile` — add version-check lines for the two new binaries in the final stage
 
 **Interfaces:**
 - Consumes: binaries from Tasks 5 and 9
+- Produces: both binaries available at `/usr/bin/` in the image
 
-- [ ] **Step 1: Read existing Dockerfile**
+- [ ] **Step 1: Read Makefile.maker.yaml and Dockerfile**
 
-Read `Dockerfile` to understand the existing multi-stage build pattern, then add stages for `persephone-extension` and `persephone-auditlog-receiver` following the same pattern.
+Read both files in full to understand the existing pattern before editing.
 
-- [ ] **Step 2: Read an existing deployment manifest for reference**
+- [ ] **Step 2: Add binaries to Makefile.maker.yaml**
 
-Read `config/manifests/deployment-audit-webhook.yaml` to match naming conventions.
-
-- [ ] **Step 3: Add build stages to Dockerfile**
-
-Following the existing pattern (one `go build` RUN per binary, one FROM scratch stage per image), add:
-```dockerfile
-# Build persephone-extension
-RUN CGO_ENABLED=0 go build -o /persephone-extension ./cmd/persephone-extension
-
-# Build persephone-auditlog-receiver  
-RUN CGO_ENABLED=0 go build -o /persephone-auditlog-receiver ./cmd/persephone-auditlog-receiver
+In the `binaries:` list, add after the `persephone-audit-webhook` entry:
+```yaml
+  - name: persephone-extension
+    fromPackage: ./cmd/persephone-extension
+    installTo: bin/
+  - name: persephone-auditlog-receiver
+    fromPackage: ./cmd/persephone-auditlog-receiver
+    installTo: bin/
 ```
-And corresponding FROM stages for the final images.
 
-- [ ] **Step 4: Create deployment-extension.yaml**
+- [ ] **Step 3: Regenerate Makefile**
+
+```bash
+go run github.com/sapcc/go-makefile-maker@latest
+```
+
+Or if go-makefile-maker is installed locally:
+```bash
+go-makefile-maker
+```
+
+This regenerates `Makefile` with build targets for the new binaries.
+
+- [ ] **Step 4: Add version checks to Dockerfile final stage**
+
+In the `RUN set -x` block that checks each binary, add:
+```dockerfile
+  && persephone-extension --version 2>/dev/null \
+  && persephone-auditlog-receiver --version 2>/dev/null \
+```
+
+- [ ] **Step 5: Verify image builds**
+
+```bash
+docker build -t persephone:test .
+```
+Expected: build succeeds, both new binaries present.
+
+- [ ] **Step 6: Verify build**
+
+```bash
+go build ./...
+```
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add Makefile.maker.yaml Makefile Dockerfile
+git commit -m "chore: add persephone-extension and persephone-auditlog-receiver to build"
+```
+
+---
+
+### Task 11: Helm chart for persephone-extension
+
+The gardenlet deploys the extension controller into each seed via a Helm chart referenced in the `ControllerDeployment`. This task creates a minimal Helm chart for `persephone-extension` that the gardenlet can install into a seed's `garden` namespace.
+
+The chart uses the internal **Keppel** registry. Keppel is SAP's internal OCI registry mirror. Image references use the form `keppel.<region>.cloud.sap/ccloud/<image>:<tag>`. The exact registry host is a chart value so it can vary per landscape.
+
+**Files:**
+- Create: `charts/persephone-extension/Chart.yaml`
+- Create: `charts/persephone-extension/values.yaml`
+- Create: `charts/persephone-extension/templates/deployment.yaml`
+- Create: `charts/persephone-extension/templates/serviceaccount.yaml`
+- Create: `charts/persephone-extension/templates/clusterrole.yaml`
+- Create: `charts/persephone-extension/templates/clusterrolebinding.yaml`
+- Create: `charts/persephone-extension/templates/networkpolicy.yaml`
+
+**Interfaces:**
+- Produces: a Helm chart installable by the gardenlet into any seed's `garden` namespace
+
+- [ ] **Step 1: Create Chart.yaml**
+
+```yaml
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v2
+name: persephone-extension
+description: Gardener extension controller for persephone audit log shipping
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+```
+
+- [ ] **Step 2: Create values.yaml**
+
+```yaml
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# image is the container image for persephone-extension.
+# The registry should point to the internal Keppel mirror, e.g.:
+#   keppel.<region>.cloud.sap/ccloud/persephone
+image:
+  registry: keppel.eu-de-1.cloud.sap/ccloud
+  repository: persephone
+  tag: latest
+  # entrypoint overrides the image's default ENTRYPOINT to select the extension binary.
+  entrypoint: /usr/bin/persephone-extension
+
+# receiverImage is the full image reference for persephone-auditlog-receiver,
+# passed as --receiver-image to the extension binary.
+# The gardenlet injects this per-seed based on the ControllerDeployment values.
+receiverImage:
+  registry: keppel.eu-de-1.cloud.sap/ccloud
+  repository: persephone
+  tag: latest
+  entrypoint: /usr/bin/persephone-auditlog-receiver
+```
+
+- [ ] **Step 3: Create templates/deployment.yaml**
 
 ```yaml
 # SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
@@ -2013,7 +2110,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: persephone-extension
-  namespace: garden
+  namespace: {{ .Release.Namespace }}
   labels:
     app: persephone
     role: extension
@@ -2028,26 +2125,34 @@ spec:
       labels:
         app: persephone
         role: extension
-        networking.gardener.cloud/to-runtime-apiserver: allowed
+        networking.gardener.cloud/to-seed-apiserver: allowed
         networking.gardener.cloud/to-dns: allowed
     spec:
       serviceAccountName: persephone-extension
       containers:
         - name: persephone-extension
-          command: ["/usr/bin/persephone-extension"]
+          image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command: ["{{ .Values.image.entrypoint }}"]
           args:
-            - --receiver-image=persephone-auditlog-receiver:latest
+            - --receiver-image={{ .Values.receiverImage.registry }}/{{ .Values.receiverImage.repository }}:{{ .Values.receiverImage.tag }}
             - --metrics-bind-address=:8080
             - --health-bind-address=:8081
-          image: persephone-extension:latest
           ports:
             - containerPort: 8080
               name: metrics
             - containerPort: 8081
               name: health
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
 ```
 
-- [ ] **Step 5: Create rbac-extension.yaml**
+- [ ] **Step 4: Create templates/serviceaccount.yaml**
 
 ```yaml
 # SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
@@ -2057,18 +2162,31 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: persephone-extension
-  namespace: garden
----
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: persephone
+    role: extension
+```
+
+- [ ] **Step 5: Create templates/clusterrole.yaml**
+
+```yaml
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: persephone-extension
+  labels:
+    app: persephone
+    role: extension
 rules:
   - apiGroups: [extensions.gardener.cloud]
     resources: [extensions]
     verbs: [get, list, watch, patch, update]
   - apiGroups: [""]
-    resources: [secrets, services]
+    resources: [secrets, services, configmaps]
     verbs: [get, list, watch, create, update, patch, delete]
   - apiGroups: [apps]
     resources: [deployments]
@@ -2076,11 +2194,21 @@ rules:
   - apiGroups: [coordination.k8s.io]
     resources: [leases]
     verbs: [get, list, watch, create, update, patch, delete]
----
+```
+
+- [ ] **Step 6: Create templates/clusterrolebinding.yaml**
+
+```yaml
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: persephone-extension
+  labels:
+    app: persephone
+    role: extension
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -2088,57 +2216,175 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: persephone-extension
-    namespace: garden
+    namespace: {{ .Release.Namespace }}
 ```
 
-- [ ] **Step 6: Create controllerregistration-auditlog.yaml**
+- [ ] **Step 7: Create templates/networkpolicy.yaml**
 
 ```yaml
 # SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-apiVersion: core.gardener.cloud/v1beta1
-kind: ControllerRegistration
-metadata:
-  name: persephone-extension-auditlog
-spec:
-  resources:
-    - kind: Extension
-      type: persephone-auditlog
-      lifecycle:
-        reconcile: BeforeKubeAPIServer
-        delete: AfterKubeAPIServer
-  deployment:
-    deploymentRefs:
-      - name: persephone-extension
----
-apiVersion: core.gardener.cloud/v1beta1
-kind: ControllerDeployment
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
 metadata:
   name: persephone-extension
+  namespace: {{ .Release.Namespace }}
 spec:
-  type: helm
-  providerConfig:
-    chart: <base64-encoded helm chart>
-    values:
-      image:
-        repository: persephone-extension
-        tag: latest
+  podSelector:
+    matchLabels:
+      app: persephone
+      role: extension
+  policyTypes:
+    - Egress
+  egress:
+    - {}  # allow all egress — extension needs to reach shoot namespaces and seed API server
 ```
 
-Note: the ControllerDeployment is a placeholder — adapt to your actual deployment mechanism (Helm chart, static manifests, or Operator-managed ManagedResource).
-
-- [ ] **Step 7: Verify build still compiles**
+- [ ] **Step 8: Verify chart renders**
 
 ```bash
-go build ./...
+helm template persephone-extension charts/persephone-extension \
+  --set image.registry=keppel.eu-de-1.cloud.sap/ccloud \
+  --set image.tag=test
+```
+Expected: valid YAML with no template errors.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add charts/persephone-extension/
+git commit -m "chore(extension): add Helm chart for gardenlet-managed seed deployment"
 ```
 
-- [ ] **Step 8: Commit**
+---
+
+### Task 12: Extension registration via ManagedResource
+
+This task registers both `gardener-extension-auditing` and `persephone-extension` with the virtual garden using the modern `operator.gardener.cloud/v1alpha1` `Extension` CR approach. Persephone creates these CRs in the runtime cluster's `garden` namespace via a `ManagedResource` — the same mechanism used for operator/webhook RBAC today.
+
+`gardener-operator` watches `Extension` CRs and creates the corresponding `ControllerRegistration` + `ControllerDeployment` in the virtual garden. The gardenlet then creates `ControllerInstallation` objects per seed and deploys the Helm chart into each seed.
+
+**Files:**
+- Create: `config/manifests/secrets-extensions.yaml`
+- Create: `config/manifests/managedresource-extensions.yaml`
+- Modify: `config/manifests/kustomization.yaml` — add both new files
+
+**Interfaces:**
+- Consumes: Helm chart from Task 11 (referenced by OCI URL), `gardener-extension-auditing` upstream chart
+- Produces: both extensions registered and auto-installed by gardenlet into all seeds
+
+- [ ] **Step 1: Read existing secrets-operator.yaml and managedresource-operator.yaml**
+
+Read both files to match the exact Secret + ManagedResource structure used by persephone today.
+
+- [ ] **Step 2: Create secrets-extensions.yaml**
+
+The Secret's `stringData` contains the `Extension` CRs as YAML values. The `gardener-extension-auditing` chart version should be pinned to the latest stable release from `europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/auditing`.
+
+The `persephone-extension` chart is referenced from the internal Keppel OCI registry. The `IMAGE_TAG` placeholder is replaced by CI at deploy time (same pattern as other persephone image references).
+
+```yaml
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v1
+kind: Secret
+metadata:
+  name: persephone-managedresource-extensions
+  namespace: garden
+type: Opaque
+stringData:
+  extension-auditing.yaml: |
+    apiVersion: operator.gardener.cloud/v1alpha1
+    kind: Extension
+    metadata:
+      name: extension-auditing
+      namespace: garden
+    spec:
+      resources:
+        - kind: Extension
+          type: auditing
+          lifecycle:
+            reconcile: BeforeKubeAPIServer
+            delete: AfterKubeAPIServer
+      deployment:
+        extension:
+          helm:
+            ociRepository:
+              ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/auditing:v0.10.0
+          values: {}
+
+  extension-persephone-auditlog.yaml: |
+    apiVersion: operator.gardener.cloud/v1alpha1
+    kind: Extension
+    metadata:
+      name: extension-persephone-auditlog
+      namespace: garden
+    spec:
+      resources:
+        - kind: Extension
+          type: persephone-auditlog
+          lifecycle:
+            reconcile: BeforeKubeAPIServer
+            delete: AfterKubeAPIServer
+      deployment:
+        extension:
+          helm:
+            ociRepository:
+              ref: keppel.eu-de-1.cloud.sap/ccloud/charts/persephone-extension:IMAGE_TAG
+          values:
+            image:
+              registry: keppel.eu-de-1.cloud.sap/ccloud
+              repository: persephone
+              tag: IMAGE_TAG
+            receiverImage:
+              registry: keppel.eu-de-1.cloud.sap/ccloud
+              repository: persephone
+              tag: IMAGE_TAG
+```
+
+Note: `IMAGE_TAG` is a placeholder — CI substitutes the actual tag before applying. Pin `extension-auditing` to the correct upstream chart version before merging.
+
+- [ ] **Step 3: Create managedresource-extensions.yaml**
+
+```yaml
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: resources.gardener.cloud/v1alpha1
+kind: ManagedResource
+metadata:
+  name: persephone-managedresource-extensions
+  namespace: garden
+  labels:
+    app: persephone
+    role: extensions
+spec:
+  secretRefs:
+    - name: persephone-managedresource-extensions
+```
+
+- [ ] **Step 4: Add to kustomization.yaml**
+
+In `config/manifests/kustomization.yaml`, add to the `resources:` list:
+```yaml
+  - secrets-extensions.yaml
+  - managedresource-extensions.yaml
+```
+
+- [ ] **Step 5: Verify kustomize renders cleanly**
 
 ```bash
-git add Dockerfile config/manifests/deployment-extension.yaml config/manifests/rbac-extension.yaml config/manifests/controllerregistration-auditlog.yaml
-git commit -m "chore(extension): add Dockerfile stages and deployment manifests for persephone-extension"
+kustomize build config/manifests/
+```
+Expected: valid YAML output including the new Secret and ManagedResource.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add config/manifests/secrets-extensions.yaml config/manifests/managedresource-extensions.yaml config/manifests/kustomization.yaml
+git commit -m "chore(extension): register auditing and persephone-auditlog extensions via ManagedResource"
 ```
 
 ---
