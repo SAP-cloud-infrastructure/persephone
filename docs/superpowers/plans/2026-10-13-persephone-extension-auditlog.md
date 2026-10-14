@@ -2453,7 +2453,7 @@ git commit -m "chore(extension): register auditing and persephone-auditlog exten
 
 ### Known implementation notes for the executor
 
-- `extensionscontroller.Add` signature: verify against `github.com/gardener/gardener/extensions/pkg/controller` in the cached module — the exact `AddArgs` fields differ between minor versions.
+- `extension.Add` and `AddArgs` are verified from `github.com/gardener/gardener@v1.135.2/.../extensions/pkg/controller/extension/controller.go` in the module cache. The real-world usage pattern is also confirmed from `pkg/provider-local/controller/extension/shoot/add.go` in the same module.
 - `SecretsManager.Cleanup` removes obsolete secret versions — call it at the end of every reconcile.
 - The fake client in tests does not support server-side apply (`client.Apply`) — use `client.Create`/`client.Update` in unit tests where SSA is exercised, or switch to envtest for integration coverage.
 - `google/uuid` is not yet in go.mod — Task 4 adds it via `go get`.
