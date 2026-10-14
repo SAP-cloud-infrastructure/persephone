@@ -1583,6 +1583,10 @@ git commit -m "feat(extension): add auditing Extension providerConfig patcher"
 
 ### Task 8: Extension actuator
 
+The `Actuator` interface (verified from `github.com/gardener/gardener@v1.135.2/.../extensions/pkg/controller/extension/actuator.go`) has **five** methods, none of which receive a `Cluster` parameter. The actuator calls `extensionscontroller.GetCluster` itself when it needs shoot metadata. `ForceDelete`, `Migrate`, and `Restore` must also be implemented to satisfy the interface.
+
+Registration uses `extension.Add` from `github.com/gardener/gardener/extensions/pkg/controller/extension` (not the generic `extensionscontroller.Add`). The `AddArgs.Type` is the extension type string; `AddArgs.ExtensionClasses` filters which Extension objects this controller handles.
+
 **Files:**
 - Create: `internal/extension/auditlog/actuator.go`
 - Create: `internal/extension/auditlog/actuator_test.go`
@@ -1591,10 +1595,13 @@ git commit -m "feat(extension): add auditing Extension providerConfig patcher"
 **Interfaces:**
 - Consumes: all of Tasks 1–7
 - Produces:
-  - `type Actuator struct { Client client.Client; ReceiverImage string }`
-  - `func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension, cluster *extensionscontroller.Cluster) error`
-  - `func (a *Actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension, cluster *extensionscontroller.Cluster) error`
-  - `func AddToManager(mgr manager.Manager, receiverImage string) error`
+  - `type Actuator struct { Client client.Client; ReceiverImage string }` — implements `extension.Actuator`
+  - `func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error`
+  - `func (a *Actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error`
+  - `func (a *Actuator) ForceDelete(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error`
+  - `func (a *Actuator) Migrate(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error`
+  - `func (a *Actuator) Restore(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error`
+  - `func AddToManager(ctx context.Context, mgr manager.Manager, receiverImage string) error`
 
 - [ ] **Step 1: Write failing tests**
 
@@ -1608,11 +1615,11 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	gardenercorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"github.com/go-logr/logr"
 
@@ -1643,19 +1650,27 @@ var _ = Describe("Actuator.Reconcile", func() {
 			ObjectMeta: metav1.ObjectMeta{Name: "auditing", Namespace: ns},
 		}
 
-		c := fake.NewClientBuilder().
-			WithScheme(kubernetes.GardenerScheme).
-			WithObjects(ex, auditingExt).
-			Build()
-
-		cluster := &extensionscontroller.Cluster{
-			Shoot: &gardenercorev1beta1.Shoot{
-				ObjectMeta: metav1.ObjectMeta{Name: "shoot", Namespace: "proj"},
+		// The actuator calls extensionscontroller.GetCluster(ctx, c, ns) to get
+		// the shoot name. GetCluster fetches a Cluster object (cluster-scoped,
+		// named after the shoot namespace). Seed-class namespaces are not shoot
+		// namespaces, so provide a Cluster object so GetCluster succeeds.
+		shootRaw, _ := json.Marshal(&gardenercorev1beta1.Shoot{
+			ObjectMeta: metav1.ObjectMeta{Name: "shoot", Namespace: "proj"},
+		})
+		cluster := &extensionsv1alpha1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{Name: ns},
+			Spec: extensionsv1alpha1.ClusterSpec{
+				Shoot: runtime.RawExtension{Raw: shootRaw},
 			},
 		}
 
+		c := fake.NewClientBuilder().
+			WithScheme(kubernetes.GardenerScheme).
+			WithObjects(ex, auditingExt, cluster).
+			Build()
+
 		a := &auditlog.Actuator{Client: c, ReceiverImage: "receiver:test"}
-		Expect(a.Reconcile(ctx, logr.Discard(), ex, cluster)).To(Succeed())
+		Expect(a.Reconcile(ctx, logr.Discard(), ex)).To(Succeed())
 
 		// The auditing Extension should now have a backend pointing at our receiver.
 		auditing := &extensionsv1alpha1.Extension{}
@@ -1691,6 +1706,7 @@ import (
 )
 
 // Actuator reconciles Extension{type:"persephone-auditlog"} objects.
+// It implements extension.Actuator from extensions/pkg/controller/extension.
 type Actuator struct {
 	Client        client.Client
 	ReceiverImage string
@@ -1698,12 +1714,17 @@ type Actuator struct {
 
 // Reconcile ensures the receiver Deployment, Service, TLS secrets, and
 // auditing Extension backend are all in place.
-func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension, cluster *extensionscontroller.Cluster) error {
+func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	namespace := ex.Namespace
 
 	cfg, err := DecodeAuditLogConfig(ex.Spec.ProviderConfig)
 	if err != nil {
 		return fmt.Errorf("failed to decode AuditLogConfig: %w", err)
+	}
+
+	cluster, err := extensionscontroller.GetCluster(ctx, a.Client, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get cluster: %w", err)
 	}
 
 	secretsManager, err := extensionssecretsmanager.SecretsManagerForCluster(
@@ -1723,9 +1744,7 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		return fmt.Errorf("failed to generate TLS secrets: %w", err)
 	}
 
-	shootName := cluster.Shoot.Name
-
-	deployment := ReceiverDeployment(namespace, a.ReceiverImage, cfg.ObjectStore, shootName)
+	deployment := ReceiverDeployment(namespace, a.ReceiverImage, cfg.ObjectStore, cluster.Shoot.Name)
 	if err := applyObject(ctx, a.Client, deployment); err != nil {
 		return fmt.Errorf("failed to apply receiver Deployment: %w", err)
 	}
@@ -1743,7 +1762,7 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 }
 
 // Delete removes the receiver resources and cleans up the auditing backend entry.
-func (a *Actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension, cluster *extensionscontroller.Cluster) error {
+func (a *Actuator) Delete(ctx context.Context, _ logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	namespace := ex.Namespace
 
 	if err := RemoveAuditingBackend(ctx, a.Client, namespace); err != nil {
@@ -1754,11 +1773,22 @@ func (a *Actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1
 		return fmt.Errorf("failed to delete receiver Service: %w", err)
 	}
 
-	if err := deleteObject(ctx, a.Client, ReceiverDeployment(namespace, "", ObjectStoreConfig{}, "")); err != nil {
-		return fmt.Errorf("failed to delete receiver Deployment: %w", err)
-	}
+	return deleteObject(ctx, a.Client, ReceiverDeployment(namespace, "", ObjectStoreConfig{}, ""))
+}
 
+// ForceDelete skips graceful cleanup — used during forced shoot deletion.
+func (a *Actuator) ForceDelete(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
+	return a.Delete(ctx, log, ex)
+}
+
+// Migrate stores state before cross-seed migration. No state to persist for this extension.
+func (a *Actuator) Migrate(_ context.Context, _ logr.Logger, _ *extensionsv1alpha1.Extension) error {
 	return nil
+}
+
+// Restore re-creates resources after cross-seed migration.
+func (a *Actuator) Restore(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
+	return a.Reconcile(ctx, log, ex)
 }
 
 // applyObject creates or updates obj using server-side apply.
@@ -1779,29 +1809,37 @@ func deleteObject(ctx context.Context, c client.Client, obj client.Object) error
 package extension
 
 import (
+	"context"
 	"fmt"
+	"time"
 
-	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
-	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/gardener/gardener/extensions/pkg/controller/extension"
+	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 
 	"github.com/sap-cloud-infrastructure/persephone/internal/extension/auditlog"
 )
 
 const extensionType = "persephone-auditlog"
 
-// AddToManager registers the persephone-auditlog extension actuator.
-func AddToManager(mgr manager.Manager, receiverImage string) error {
-	actuator := &auditlog.Actuator{
-		Client:        mgr.GetClient(),
-		ReceiverImage: receiverImage,
-	}
-
-	if err := extensionscontroller.Add(mgr, extensionscontroller.AddArgs{
-		Actuator:          actuator,
-		ControllerOptions: extensionscontroller.ControllerOptions{},
-		Predicates:        extensionscontroller.DefaultPredicates(extensionType),
-		Type:              extensionsv1alpha1.SchemeGroupVersion.WithKind("Extension"),
+// AddToManager registers the persephone-auditlog extension actuator with the manager.
+// ctx is used by DefaultPredicates to set up the ShootNotFailed predicate watch.
+func AddToManager(ctx context.Context, mgr manager.Manager, receiverImage string) error {
+	if err := extension.Add(mgr, extension.AddArgs{
+		Actuator: &auditlog.Actuator{
+			Client:        mgr.GetClient(),
+			ReceiverImage: receiverImage,
+		},
+		Name:            extensionType,
+		FinalizerSuffix: extensionType,
+		Resync:          60 * time.Minute,
+		Type:            extensionType,
+		ExtensionClasses: []extensionsv1alpha1.ExtensionClass{
+			extensionsv1alpha1.ExtensionClassShoot,
+		},
+		Predicates:                extension.DefaultPredicates(ctx, mgr, false),
+		IgnoreOperationAnnotation: false,
 	}); err != nil {
 		return fmt.Errorf("failed to add %s controller: %w", extensionType, err)
 	}
@@ -1809,21 +1847,26 @@ func AddToManager(mgr manager.Manager, receiverImage string) error {
 }
 ```
 
-Note: verify the exact signature of `extensionscontroller.Add` against the gardener version in go.mod — it may differ. Check `github.com/gardener/gardener/extensions/pkg/controller` in the module cache.
+- [ ] **Step 5: Update main.go in Task 9 to pass ctx to AddToManager**
 
-- [ ] **Step 5: Run tests to verify they pass**
+The `AddToManager` signature now takes `ctx`. In `cmd/persephone-extension/main.go`, the call becomes:
+```go
+if err := extension.AddToManager(ctx, mgr, opts.ReceiverImage); err != nil {
+```
+
+- [ ] **Step 6: Run tests to verify they pass**
 
 ```bash
 go test ./internal/extension/... -v
 ```
 
-- [ ] **Step 6: Verify build**
+- [ ] **Step 7: Verify build**
 
 ```bash
 go build ./...
 ```
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add internal/extension/
@@ -1947,7 +1990,7 @@ func run(ctx context.Context, logger logr.Logger, opts *options.Options) error {
 		return err
 	}
 
-	if err := extension.AddToManager(mgr, opts.ReceiverImage); err != nil {
+	if err := extension.AddToManager(ctx, mgr, opts.ReceiverImage); err != nil {
 		return fmt.Errorf("failed to add extension controllers: %w", err)
 	}
 
