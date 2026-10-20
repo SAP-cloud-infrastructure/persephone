@@ -73,6 +73,9 @@ func kubeconfigForGarden(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("could not extract project from project result: %w", err)
 		}
+		if project == nil || project.ID == "" {
+			return errors.New("garden authentication requires a project-scoped Keystone token; authentication returned no project ID")
+		}
 		authOptions.Scope.ProjectID = project.ID
 
 		endpointOpts := openstack.PersephoneEndpointOpts{
