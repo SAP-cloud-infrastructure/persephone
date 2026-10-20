@@ -111,9 +111,10 @@ func TestKubeconfigForGardenMissingProject(t *testing.T) {
 			t.Cleanup(func() { auth.AuthenticatedClientFunc = original })
 			auth.AuthenticatedClientFunc = func(ctx context.Context, opts gophercloud.AuthOptions) (*gophercloud.ProviderClient, error) {
 				provider := &gophercloud.ProviderClient{}
-				result := tokens.CreateResult{}
-				result.Body = map[string]any{"token": tc.token}
-				result.Header = map[string][]string{"X-Subject-Token": {"test-token"}}
+				result := tokens.CreateResult{
+					Body:   map[string]any{"token": tc.token},
+					Header: map[string][]string{"X-Subject-Token": {"test-token"}},
+				}
 				if err := provider.SetTokenAndAuthResult(result); err != nil {
 					return nil, err
 				}
