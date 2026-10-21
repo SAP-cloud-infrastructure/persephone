@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2026 SAP SE or an SAP affiliate company and Project Persephone contributors
+# SPDX-License-Identifier: Apache-2.0
+
+ARG IMAGE=golang:1.27.2-alpine3.24
+
+FROM $IMAGE AS builder
+
+RUN apk add --no-cache --no-progress ca-certificates gcc musl-dev git
+
+COPY . /src
+ARG BININFO_BUILD_DATE BININFO_COMMIT_HASH BININFO_VERSION
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+  cd /src && \
+  go build -o /pkg/bin/persephone-extension \
+    -ldflags "-s -w \
+      -X github.com/sapcc/go-api-declarations/bininfo.binName=persephone-extension \
+      -X github.com/sapcc/go-api-declarations/bininfo.version=${BININFO_VERSION} \
+      -X github.com/sapcc/go-api-declarations/bininfo.commit=${BININFO_COMMIT_HASH} \
+      -X github.com/sapcc/go-api-declarations/bininfo.buildDate=${BININFO_BUILD_DATE}" \
+    ./cmd/persephone-extension && \
+  go build -o /pkg/bin/persephone-auditlog-receiver \
+    -ldflags "-s -w \
+      -X github.com/sapcc/go-api-declarations/bininfo.binName=persephone-auditlog-receiver \
+      -X github.com/sapcc/go-api-declarations/bininfo.version=${BININFO_VERSION} \
+      -X github.com/sapcc/go-api-declarations/bininfo.commit=${BININFO_COMMIT_HASH} \
+      -X github.com/sapcc/go-api-declarations/bininfo.buildDate=${BININFO_BUILD_DATE}" \
+    ./cmd/persephone-auditlog-receiver
+
+################################################################################
+
+FROM alpine:3.24
+
+RUN addgroup -g 4200 appgroup \
+  && adduser -h /home/appuser -s /sbin/nologin -G appgroup -D -u 4200 appuser
+
+RUN apk upgrade --no-cache --no-progress \
+  && apk del --no-cache --no-progress apk-tools musl-utils
+
+COPY --from=builder /etc/ssl/certs/ /etc/ssl/certs/
+COPY --from=builder /etc/ssl/cert.pem /etc/ssl/cert.pem
+COPY --from=builder /pkg/bin/ /usr/bin/
+RUN set -x \
+  && persephone-extension --version 2>/dev/null \
+  && persephone-auditlog-receiver --version 2>/dev/null
+
+ARG BININFO_BUILD_DATE BININFO_COMMIT_HASH BININFO_VERSION
+LABEL source_repository="https://github.com/sap-cloud-infrastructure/persephone" \
+  org.opencontainers.image.url="https://github.com/sap-cloud-infrastructure/persephone" \
+  org.opencontainers.image.created=${BININFO_BUILD_DATE} \
+  org.opencontainers.image.revision=${BININFO_COMMIT_HASH} \
+  org.opencontainers.image.version=${BININFO_VERSION}
+
+USER 4200:4200
+WORKDIR /home/appuser
