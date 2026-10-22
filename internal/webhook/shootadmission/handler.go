@@ -141,28 +141,30 @@ func (h *Handler) handle(ctx context.Context, obj runtime.Object) error {
 	// Check if this is a workerless shoot
 	isWorkerless := len(shoot.Spec.Provider.Workers) == 0
 
-	log.Info("Getting cluster user client set")
-	clusterUserName := kubernetes.GetClusterUserName(h.LandscapeName, shoot.Name, openStackUserInfo.ProjectID)
-	userClientSet, err := NewClusterUserClientSet(ctx, openStackClientSet, clusterUserName, openStackUserInfo.ProjectID)
-	if err != nil {
-		return fmt.Errorf("could not create cluster user clients: %w", err)
-	}
+	isDryRun := ptr.Deref(req.DryRun, false)
 
-	var credentialsBinding *gardenersecurityv1alpha1.CredentialsBinding
-	// Only create credentials binding for non-workerless shoots
-	if req.Operation == admissionv1.Create && !isWorkerless {
-		log.Info("Ensuring Openstack application credentials for this Shoot")
-		credentialsBinding, err = ensureOpenStackCredentialInternalSecretAndBinding(ctx, log, h.Client, userClientSet, shoot, openStackUserInfo)
+	// OpenStack user creation/rotation and credential issuance are real side effects; skip on dry-run.
+	// sideEffects: NoneOnDryRun is declared in the webhook registration, so we must honour it.
+	// Floating pool detection requires a project-scoped network client (the cluster user's), so the
+	// entire non-workerless infra block is skipped on dry-run too.
+	if !isWorkerless && !isDryRun {
+		clusterUserName := kubernetes.GetClusterUserName(h.LandscapeName, shoot.Name, openStackUserInfo.ProjectID)
+		userClientSet, err := NewClusterUserClientSet(ctx, openStackClientSet, clusterUserName, openStackUserInfo.ProjectID)
 		if err != nil {
-			h.metrics.recordCredentialIssuance(openStackUserInfo.Region, "error")
-			h.metrics.recordShootMutation(openStackUserInfo.Region, "error")
-			return fmt.Errorf("failed to ensure OpenStack credentials Secret and CredentialsBinding: %w", err)
+			return fmt.Errorf("could not create cluster user clients: %w", err)
 		}
-		h.metrics.recordCredentialIssuance(openStackUserInfo.Region, "success")
-	}
 
-	// Only set infrastructure and control plane config for non-workerless shoots
-	if !isWorkerless {
+		if req.Operation == admissionv1.Create {
+			log.Info("Ensuring Openstack application credentials for this Shoot")
+			credentialsBinding, err := ensureOpenStackCredentialInternalSecretAndBinding(ctx, log, h.Client, userClientSet, shoot, openStackUserInfo)
+			if err != nil {
+				h.metrics.recordCredentialIssuance(openStackUserInfo.Region, "error")
+				h.metrics.recordShootMutation(openStackUserInfo.Region, "error")
+				return fmt.Errorf("failed to ensure OpenStack credentials Secret and CredentialsBinding: %w", err)
+			}
+			h.metrics.recordCredentialIssuance(openStackUserInfo.Region, "success")
+			shoot.Spec.CredentialsBindingName = &credentialsBinding.Name
+		}
 		var infrastructureConfig *gardeneropenstackv1alpha1.InfrastructureConfig
 		if shoot.Spec.Provider.InfrastructureConfig == nil {
 			infrastructureConfig = &gardeneropenstackv1alpha1.InfrastructureConfig{}
@@ -180,13 +182,14 @@ func (h *Handler) handle(ctx context.Context, obj runtime.Object) error {
 
 		if infrastructureConfig.FloatingPoolName == "" {
 			log.Info("Getting external networks for project")
-			infrastructureConfig.FloatingPoolName, err = getExternalNetworkForProject(ctx, userClientSet.NetworkClient)
+			floatingPoolName, err := getExternalNetworkForProject(ctx, userClientSet.NetworkClient)
 			if err != nil {
 				h.metrics.recordFloatingPoolDetection(openStackUserInfo.Region, "error")
 				h.metrics.recordShootMutation(openStackUserInfo.Region, "error")
 				return fmt.Errorf("error detecting floating pool name: %w", err)
 			}
 			h.metrics.recordFloatingPoolDetection(openStackUserInfo.Region, "success")
+			infrastructureConfig.FloatingPoolName = floatingPoolName
 		}
 
 		if infrastructureConfig.Networks.Workers == "" {
@@ -237,11 +240,6 @@ func (h *Handler) handle(ctx context.Context, obj runtime.Object) error {
 				"seed.gardener.cloud/region": openStackUserInfo.Region,
 			},
 		}
-	}
-
-	// Only set credentials binding for non-workerless shoots
-	if credentialsBinding != nil && !isWorkerless {
-		shoot.Spec.CredentialsBindingName = &credentialsBinding.Name
 	}
 
 	h.metrics.recordShootMutation(openStackUserInfo.Region, "success")
