@@ -149,8 +149,9 @@ func (h *Handler) handle(ctx context.Context, obj runtime.Object) error {
 	}
 
 	var credentialsBinding *gardenersecurityv1alpha1.CredentialsBinding
-	// Only create credentials binding for non-workerless shoots
-	if req.Operation == admissionv1.Create && !isWorkerless {
+	// Only create credentials binding for non-workerless, non-dry-run creates.
+	// sideEffects: NoneOnDryRun is declared in the webhook registration, so we must honour it.
+	if req.Operation == admissionv1.Create && !isWorkerless && !ptr.Deref(req.DryRun, false) {
 		log.Info("Ensuring Openstack application credentials for this Shoot")
 		credentialsBinding, err = ensureOpenStackCredentialInternalSecretAndBinding(ctx, log, h.Client, userClientSet, shoot, openStackUserInfo)
 		if err != nil {
