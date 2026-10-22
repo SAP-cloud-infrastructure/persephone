@@ -15,6 +15,8 @@ import (
 	"github.com/gardener/gardener-extension-provider-openstack/pkg/openstack"
 	gardenercorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
+	operatorv1alpha1 "github.com/gardener/gardener/pkg/apis/operator/v1alpha1"
+	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
 	gardenersecurityv1alpha1 "github.com/gardener/gardener/pkg/apis/security/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/applicationcredentials"
@@ -41,6 +43,8 @@ func init() {
 	utilruntime.Must(gardenercorev1beta1.AddToScheme(GardenerScheme))
 	utilruntime.Must(gardeneropenstackv1alpha1.AddToScheme(GardenerScheme))
 	utilruntime.Must(gardenersecurityv1alpha1.AddToScheme(GardenerScheme))
+	utilruntime.Must(operatorv1alpha1.AddToScheme(GardenerScheme))
+	utilruntime.Must(resourcesv1alpha1.AddToScheme(GardenerScheme))
 }
 
 // GetGardenerProjectNamespaceName returns the name of the namespace that is
