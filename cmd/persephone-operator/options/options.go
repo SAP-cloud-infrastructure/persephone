@@ -57,6 +57,9 @@ type ControllerOptions struct {
 	InternalSecret InternalSecret
 	// Shoot contains configuration for the shoot controller.
 	Shoot ShootController
+	// AuditlogChartRef is the full OCI ref for the persephone-auditlog Helm chart pushed by the build pipeline,
+	// e.g. "keppel.eu-de-1.cloud.sap/ccloud-helm/persephone-auditlog:0.0.0-<sha>".
+	AuditlogChartRef string
 }
 
 // ProjectController contains configuration for the project controller.
@@ -130,6 +133,8 @@ func (o *Options) AddFlags() {
 		"The maximum number of concurrent reconciliations performed by the internal-secret controller.")
 	flag.IntVar(&o.Controllers.Shoot.MaxConcurrentReconciles, "shoot-controller-max-concurrent-reconciles", 20,
 		"The maximum number of concurrent reconciliations performed by the shoot controller.")
+	flag.StringVar(&o.Controllers.AuditlogChartRef, "auditlog-chart-ref", "",
+		"Full OCI ref for the persephone-auditlog Helm chart, e.g. keppel.eu-de-1.cloud.sap/ccloud-helm/persephone-auditlog:0.0.0-<sha>.")
 
 	o.Zap = zap.Options{Development: false}
 	o.Zap.BindFlags(flag.CommandLine)
