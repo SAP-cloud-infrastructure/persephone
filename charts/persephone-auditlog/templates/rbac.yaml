@@ -1,0 +1,42 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "name" . }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+rules:
+  # Watch and patch Extension objects (persephone-auditlog and auditing types)
+  - apiGroups: [extensions.gardener.cloud]
+    resources: [extensions, extensions/status, clusters]
+    verbs: [get, list, watch, patch, update]
+  # Deploy and manage receiver Deployment + Service in shoot namespaces
+  - apiGroups: ["", apps]
+    resources: [deployments, services, secrets, configmaps, serviceaccounts]
+    verbs: [get, list, watch, create, patch, update, delete]
+  # SecretsManager creates and manages TLS secrets
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [get, list, watch, create, patch, update, delete]
+  # Leader election
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    verbs: [get, list, watch, create, update, patch]
+  # Events
+  - apiGroups: [""]
+    resources: [events]
+    verbs: [create, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "name" . }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "name" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "name" . }}
+    namespace: {{ .Release.Namespace }}
