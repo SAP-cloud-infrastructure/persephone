@@ -28,6 +28,7 @@ spec:
             service: persephone
             component: operator
             tier: os
+            support_group: managed-kubernetes
           annotations:
             summary: "Credential rotation failures in {{ $labels.region }}"
             description: "Credential rotation failures detected in region {{ $labels.region }}. This may impact cluster access. Rate: {{ $value | humanize }} failures/sec."
@@ -41,6 +42,7 @@ spec:
             service: persephone
             component: operator
             tier: os
+            support_group: managed-kubernetes
           annotations:
             summary: "Credential cleanup failures in {{ $labels.region }}"
             description: "Credential cleanup failures detected in region {{ $labels.region }}. Old credentials may not be cleaned up properly. Rate: {{ $value | humanize }} failures/sec."
@@ -58,6 +60,7 @@ spec:
             service: persephone
             component: webhook
             tier: os
+            support_group: managed-kubernetes
           annotations:
             summary: "Application credential issuance failures in {{ $labels.region }}"
             description: "Application credential issuance failures detected in region {{ $labels.region }}. Shoot clusters may fail to provision. Rate: {{ $value | humanize }} failures/sec."
@@ -75,6 +78,7 @@ spec:
             service: persephone
             component: webhook
             tier: os
+            support_group: managed-kubernetes
           annotations:
             summary: "High Shoot mutation failure rate in {{ $labels.region }}"
             description: "Shoot mutation failure rate is {{ $value | humanizePercentage }} in region {{ $labels.region }}. More than 10% of shoot mutations are failing."
@@ -88,6 +92,7 @@ spec:
             service: persephone
             component: webhook
             tier: os
+            support_group: managed-kubernetes
           annotations:
             summary: "Floating pool detection failures in {{ $labels.region }}"
             description: "Floating pool detection failures detected in region {{ $labels.region }}. Shoot clusters may not get proper floating IP configuration. Rate: {{ $value | humanize }} failures/sec."
@@ -108,6 +113,7 @@ spec:
             service: persephone
             component: webhook
             tier: os
+            support_group: managed-kubernetes
           annotations:
             summary: "High authentication failure rate in {{ $labels.region }}"
             description: "Authentication failure rate is {{ $value | humanizePercentage }} in region {{ $labels.region }}. More than 10% of authentication attempts are failing."
@@ -121,6 +127,7 @@ spec:
             service: persephone
             component: webhook
             tier: os
+            support_group: managed-kubernetes
           annotations:
             summary: "Keystone authentication failures in {{ $labels.region }}"
             description: "Keystone authentication failures detected in region {{ $labels.region }} (error_type: {{ $labels.error_type }}). Rate: {{ $value | humanize }} failures/sec."
@@ -137,6 +144,7 @@ spec:
             service: persephone
             component: operator
             tier: os
+            support_group: managed-kubernetes
           annotations:
             summary: "Project resource creation failures in {{ $labels.region }}"
             description: "Gardener project resource creation failures detected in region {{ $labels.region }}. New projects may not be provisioned correctly. Rate: {{ $value | humanize }} failures/sec."
@@ -153,6 +161,7 @@ spec:
             service: persephone
             component: webhook
             tier: os
+            support_group: managed-kubernetes
           annotations:
             summary: "Webhook resource reconciliation failures in {{ $labels.region }}"
             description: "Gardener resource reconciliation failures detected during authentication in region {{ $labels.region }}. Rate: {{ $value | humanize }} failures/sec."
