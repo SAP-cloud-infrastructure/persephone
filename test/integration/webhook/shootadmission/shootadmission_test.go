@@ -130,7 +130,7 @@ var _ = Describe("ShootAdmission tests", func() {
 			Expect(string(shoot.Spec.Provider.ControlPlaneConfig.Raw)).To(Equal(`{"apiVersion":"openstack.provider.extensions.gardener.cloud/v1alpha1","kind":"ControlPlaneConfig","loadBalancerProvider":"f5"}`))
 
 			Expect(shoot.Spec.Provider.InfrastructureConfig).NotTo(BeNil())
-			Expect(string(shoot.Spec.Provider.InfrastructureConfig.Raw)).To(Equal(`{"apiVersion":"openstack.provider.extensions.gardener.cloud/v1alpha1","floatingPoolName":"fake-external-network-0","kind":"InfrastructureConfig","networks":{"worker":"","workers":"10.180.24.0/24"}}`))
+			Expect(string(shoot.Spec.Provider.InfrastructureConfig.Raw)).To(Equal(`{"apiVersion":"openstack.provider.extensions.gardener.cloud/v1alpha1","floatingPoolName":"fake-external-network-0","kind":"InfrastructureConfig","networks":{"workers":"10.180.24.0/24"}}`))
 		})
 
 		It("should have created an InternalSecret with application credentials for the Shoot", func() {
@@ -236,7 +236,7 @@ var _ = Describe("ShootAdmission tests", func() {
 			Expect(string(shoot.Spec.Provider.ControlPlaneConfig.Raw)).To(Equal(`{"apiVersion":"openstack.provider.extensions.gardener.cloud/v1alpha1","kind":"ControlPlaneConfig"}`))
 
 			Expect(shoot.Spec.Provider.InfrastructureConfig).NotTo(BeNil())
-			Expect(string(shoot.Spec.Provider.InfrastructureConfig.Raw)).To(Equal(`{"apiVersion":"openstack.provider.extensions.gardener.cloud/v1alpha1","floatingPoolName":"` + floatingPoolName + `","kind":"InfrastructureConfig","networks":{"worker":"","workers":"` + nodeNetworkCIDR + `"}}`))
+			Expect(string(shoot.Spec.Provider.InfrastructureConfig.Raw)).To(Equal(`{"apiVersion":"openstack.provider.extensions.gardener.cloud/v1alpha1","kind":"InfrastructureConfig","floatingPoolName":"` + floatingPoolName + `","networks":{"workers":"` + nodeNetworkCIDR + `"}}`))
 		})
 	})
 
