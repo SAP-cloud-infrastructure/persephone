@@ -80,6 +80,14 @@ func getAuthOptions() (gophercloud.AuthOptions, error) {
 		return gophercloud.AuthOptions{}, errors.New("application credentials missing")
 	}
 
+	// Gophercloud selects password authentication when Password is non-empty,
+	// even if application credentials are also supplied. Match our credential
+	// validation above by giving application credentials precedence, including
+	// when another OpenStack command left OS_PASSWORD in the environment.
+	if applicationCredentialSecret != "" {
+		password = ""
+	}
+
 	// this is mostly copied from https://github.com/sapcc/go-bits/blob/master/gophercloudext/auth.go#L94-L124
 	// minus the ID variants of domain, user and projects
 
