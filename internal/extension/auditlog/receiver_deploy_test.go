@@ -36,11 +36,12 @@ var _ = Describe("ReceiverDeployment", func() {
 		Expect(mounts).To(ContainElement(HaveField("Name", "receiver-tls")))
 	})
 
-	It("loads cloud-provider secret as env", func() {
+	It("maps cloudprovider secret keys to OS_ env vars", func() {
 		d := auditlog.ReceiverDeployment("ns", "img:sha", "b", "p", "tls-secret")
-		envFrom := d.Spec.Template.Spec.Containers[0].EnvFrom
-		Expect(envFrom).To(HaveLen(1))
-		Expect(envFrom[0].SecretRef.Name).To(Equal("cloudprovider"))
+		env := d.Spec.Template.Spec.Containers[0].Env
+		Expect(env).To(ContainElement(HaveField("Name", "OS_AUTH_URL")))
+		Expect(env).To(ContainElement(HaveField("Name", "OS_APPLICATION_CREDENTIAL_ID")))
+		Expect(env).To(ContainElement(HaveField("Name", "OS_APPLICATION_CREDENTIAL_SECRET")))
 	})
 })
 

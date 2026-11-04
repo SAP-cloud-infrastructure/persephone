@@ -60,17 +60,10 @@ func ReceiverDeployment(namespace, image, container, prefix, tlsSecretName strin
 							Ports: []corev1.ContainerPort{
 								{Name: "https", ContainerPort: receiverPort, Protocol: corev1.ProtocolTCP},
 							},
-							EnvFrom: []corev1.EnvFromSource{
-								{
-									// Cloud provider secret provides OS_AUTH_URL,
-									// OS_APPLICATION_CREDENTIAL_ID, and
-									// OS_APPLICATION_CREDENTIAL_SECRET.
-									SecretRef: &corev1.SecretEnvSource{
-										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "cloudprovider",
-										},
-									},
-								},
+							Env: []corev1.EnvVar{
+								envFromSecret("OS_AUTH_URL", "cloudprovider", "authURL"),
+								envFromSecret("OS_APPLICATION_CREDENTIAL_ID", "cloudprovider", "applicationCredentialID"),
+								envFromSecret("OS_APPLICATION_CREDENTIAL_SECRET", "cloudprovider", "applicationCredentialSecret"),
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
@@ -121,6 +114,18 @@ func ReceiverService(namespace string) *corev1.Service {
 					TargetPort: intstr.FromInt32(receiverPort),
 					Protocol:   corev1.ProtocolTCP,
 				},
+			},
+		},
+	}
+}
+
+func envFromSecret(envName, secretName, key string) corev1.EnvVar {
+	return corev1.EnvVar{
+		Name: envName,
+		ValueFrom: &corev1.EnvVarSource{
+			SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{Name: secretName},
+				Key:                  key,
 			},
 		},
 	}
