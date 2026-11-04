@@ -96,8 +96,14 @@ func getAuditingConfig(ctx context.Context, c client.Client, namespace string) (
 				},
 			},
 		}
-		if createErr := c.Create(ctx, ext); createErr != nil {
+		createErr := c.Create(ctx, ext)
+		if createErr != nil && !errors.IsAlreadyExists(createErr) {
 			return nil, nil, fmt.Errorf("create auditing Extension: %w", createErr)
+		}
+		if errors.IsAlreadyExists(createErr) {
+			if getErr := c.Get(ctx, client.ObjectKey{Name: auditingExtensionName, Namespace: namespace}, ext); getErr != nil {
+				return nil, nil, fmt.Errorf("get auditing Extension after conflict: %w", getErr)
+			}
 		}
 	} else if err != nil {
 		return nil, nil, fmt.Errorf("get auditing Extension: %w", err)
