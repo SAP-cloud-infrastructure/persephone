@@ -30,6 +30,10 @@ func ReceiverDeployment(namespace, image, container, prefix string) *appsv1.Depl
 	}
 
 	return &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ReceiverServiceName,
 			Namespace: namespace,
@@ -98,6 +102,10 @@ func ReceiverService(namespace string) *corev1.Service {
 		"role": "auditlog-receiver",
 	}
 	return &corev1.Service{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Service",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ReceiverServiceName,
 			Namespace: namespace,
