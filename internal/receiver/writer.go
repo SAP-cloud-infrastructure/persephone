@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gophercloud/gophercloud/v2"
 	"github.com/gophercloud/gophercloud/v2/openstack"
+	"github.com/gophercloud/gophercloud/v2/openstack/objectstorage/v1/containers"
 	"github.com/gophercloud/gophercloud/v2/openstack/objectstorage/v1/objects"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 )
@@ -39,6 +40,9 @@ func NewSwiftWriter(ctx context.Context, logger logr.Logger, authOpts gopherclou
 	client, err := openstack.NewObjectStorageV1(provider, gophercloud.EndpointOpts{})
 	if err != nil {
 		return nil, fmt.Errorf("object storage client: %w", err)
+	}
+	if err := containers.Create(ctx, client, container, nil).Err; err != nil {
+		return nil, fmt.Errorf("ensure swift container %q: %w", container, err)
 	}
 	return &SwiftWriter{
 		Logger:    logger,

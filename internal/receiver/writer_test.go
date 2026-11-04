@@ -59,8 +59,11 @@ var _ = Describe("SwiftWriter", func() {
 				})
 			case r.Method == http.MethodPut:
 				body, _ := io.ReadAll(r.Body)
-				putPaths = append(putPaths, r.URL.Path)
-				putBodies = append(putBodies, body)
+				// Only record object PUTs (path has >3 segments); container PUTs have exactly 3.
+				if strings.Count(r.URL.Path, "/") > 3 {
+					putPaths = append(putPaths, r.URL.Path)
+					putBodies = append(putBodies, body)
+				}
 				w.WriteHeader(http.StatusCreated)
 			default:
 				w.WriteHeader(http.StatusNotFound)
