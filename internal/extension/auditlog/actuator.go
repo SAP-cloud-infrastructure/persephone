@@ -53,7 +53,8 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		return fmt.Errorf("create SecretsManager: %w", err)
 	}
 
-	if _, err := extensionssecretsmanager.GenerateAllSecrets(ctx, secretsManager, SecretConfigs(namespace)); err != nil {
+	secrets, err := extensionssecretsmanager.GenerateAllSecrets(ctx, secretsManager, SecretConfigs(namespace))
+	if err != nil {
 		return fmt.Errorf("generate TLS secrets: %w", err)
 	}
 
@@ -62,7 +63,8 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		return fmt.Errorf("expand prefix: %w", err)
 	}
 
-	deployment := ReceiverDeployment(namespace, a.ReceiverImage, cfg.ObjectStore.Container, prefix)
+	receiverTLSName := secrets[ReceiverTLSSecretName].Name
+	deployment := ReceiverDeployment(namespace, a.ReceiverImage, cfg.ObjectStore.Container, prefix, receiverTLSName)
 	if err := applyObject(ctx, a.Client, deployment); err != nil {
 		return fmt.Errorf("apply receiver Deployment: %w", err)
 	}
@@ -89,7 +91,7 @@ func (a *Actuator) Delete(ctx context.Context, _ logr.Logger, ex *extensionsv1al
 	if err := deleteObject(ctx, a.Client, ReceiverService(namespace)); err != nil {
 		return fmt.Errorf("delete receiver Service: %w", err)
 	}
-	return deleteObject(ctx, a.Client, ReceiverDeployment(namespace, "", "", ""))
+	return deleteObject(ctx, a.Client, ReceiverDeployment(namespace, "", "", "", ""))
 }
 
 // ForceDelete skips graceful cleanup — used during forced shoot deletion.

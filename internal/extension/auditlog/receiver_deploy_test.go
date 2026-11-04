@@ -14,28 +14,30 @@ import (
 
 var _ = Describe("ReceiverDeployment", func() {
 	It("creates a Deployment in the given namespace", func() {
-		d := auditlog.ReceiverDeployment("shoot--p--n", "img:sha", "my-bucket", "logs/")
+		d := auditlog.ReceiverDeployment("shoot--p--n", "img:sha", "my-bucket", "logs/", "persephone-auditlog-receiver-tls-abc123")
 		Expect(d.Namespace).To(Equal("shoot--p--n"))
 		Expect(d.Name).To(Equal(auditlog.ReceiverServiceName))
 	})
 
 	It("passes container and prefix as flags", func() {
-		d := auditlog.ReceiverDeployment("ns", "img:sha", "bucket", "pfx/")
+		d := auditlog.ReceiverDeployment("ns", "img:sha", "bucket", "pfx/", "tls-secret-versioned")
 		args := d.Spec.Template.Spec.Containers[0].Args
 		Expect(args).To(ContainElement("--container=bucket"))
 		Expect(args).To(ContainElement("--prefix=pfx/"))
 	})
 
-	It("mounts receiver-tls secret", func() {
-		d := auditlog.ReceiverDeployment("ns", "img:sha", "b", "p")
+	It("mounts receiver-tls secret with versioned name", func() {
+		d := auditlog.ReceiverDeployment("ns", "img:sha", "b", "p", "persephone-auditlog-receiver-tls-abc")
 		vols := d.Spec.Template.Spec.Volumes
 		Expect(vols).To(ContainElement(HaveField("Name", "receiver-tls")))
+		tlsVol := vols[0]
+		Expect(tlsVol.Secret.SecretName).To(Equal("persephone-auditlog-receiver-tls-abc"))
 		mounts := d.Spec.Template.Spec.Containers[0].VolumeMounts
 		Expect(mounts).To(ContainElement(HaveField("Name", "receiver-tls")))
 	})
 
 	It("loads cloud-provider secret as env", func() {
-		d := auditlog.ReceiverDeployment("ns", "img:sha", "b", "p")
+		d := auditlog.ReceiverDeployment("ns", "img:sha", "b", "p", "tls-secret")
 		envFrom := d.Spec.Template.Spec.Containers[0].EnvFrom
 		Expect(envFrom).To(HaveLen(1))
 		Expect(envFrom[0].SecretRef.Name).To(Equal("cloudprovider"))
