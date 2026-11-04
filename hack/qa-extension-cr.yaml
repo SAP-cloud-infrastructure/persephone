@@ -10,10 +10,10 @@ spec:
     extension:
       helm:
         ociRepository:
-          ref: keppel.eu-nl-1.cloud.sap/gardener-dev/persephone-auditlog:0.0.0-e03c277
+          ref: keppel.eu-nl-1.cloud.sap/gardener-dev/persephone-auditlog:0.0.0-2340435
       values:
         image:
           repository: keppel.eu-nl-1.cloud.sap/gardener-dev/persephone-auditlog
-          tag: "e03c277"
+          tag: "2340435"
       policy: OnDemand
       injectGardenKubeconfig: true

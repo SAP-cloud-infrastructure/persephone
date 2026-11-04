@@ -2,5 +2,5 @@ apiVersion: v2
 name: persephone-auditlog
 description: Gardener extension that ships shoot audit logs to OpenStack Swift
 type: application
-version: 0.0.0-6c80820
+version: 0.0.0-2340435
 appVersion: "0.0.0"
