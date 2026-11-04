@@ -28,6 +28,10 @@ func ReceiverDeployment(namespace, image, container, prefix, tlsSecretName strin
 	labels := map[string]string{
 		"app":  ReceiverServiceName,
 		"role": "auditlog-receiver",
+		// Allow egress to public networks (OpenStack identity + Swift endpoints).
+		"networking.gardener.cloud/to-public-networks": "allowed",
+		// Allow egress to DNS for name resolution.
+		"networking.gardener.cloud/to-dns": "allowed",
 	}
 
 	return &appsv1.Deployment{
