@@ -81,12 +81,12 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		return fmt.Errorf("apply receiver Service: %w", err)
 	}
 
-	if err := EnsureAuditingBackend(ctx, a.Client, namespace); err != nil {
+	if err := EnsureAuditingBackend(ctx, a.Client, namespace, cluster.Shoot.Name); err != nil {
 		return fmt.Errorf("ensure auditing backend: %w", err)
 	}
 
 	if a.GardenClient != nil {
-		if err := a.syncForwarderTLSToGarden(ctx, secrets, cluster.Shoot.Namespace); err != nil {
+		if err := a.syncForwarderTLSToGarden(ctx, secrets, cluster.Shoot.Name, cluster.Shoot.Namespace); err != nil {
 			return fmt.Errorf("sync forwarder TLS to garden: %w", err)
 		}
 	}
@@ -143,11 +143,10 @@ func expandPrefix(prefix, shootName string) (string, error) {
 	return buf.String(), nil
 }
 
-// syncForwarderTLSToGarden creates or updates a stable-named Secret in the virtual garden
-// project namespace containing the forwarder client TLS material. The shoot's spec.resources
-// must reference this secret under ForwarderTLSResourceName so the auditing extension can
-// mount it into the forwarder pod.
-func (a *Actuator) syncForwarderTLSToGarden(ctx context.Context, secrets map[string]*corev1.Secret, projectNamespace string) error {
+// syncForwarderTLSToGarden creates or updates a Secret in the virtual garden project namespace
+// containing the forwarder client TLS material. The secret is named <shootName>.persephone-auditlog-forwarder-tls
+// so the SeedRestriction webhook allows the seed SA to manage it.
+func (a *Actuator) syncForwarderTLSToGarden(ctx context.Context, secrets map[string]*corev1.Secret, shootName, projectNamespace string) error {
 	src := secrets[ForwarderClientTLSSecretName]
 	if src == nil {
 		return fmt.Errorf("seed secret %q not found", ForwarderClientTLSSecretName)
@@ -155,7 +154,7 @@ func (a *Actuator) syncForwarderTLSToGarden(ctx context.Context, secrets map[str
 
 	desired := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      ForwarderTLSResourceName,
+			Name:      shootName + "." + ForwarderTLSResourceName,
 			Namespace: projectNamespace,
 		},
 		Data: map[string][]byte{

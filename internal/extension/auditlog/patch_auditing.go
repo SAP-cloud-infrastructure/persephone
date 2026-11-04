@@ -43,20 +43,21 @@ type auditBackendTLS struct {
 
 // EnsureAuditingBackend upserts the persephone backend into the auditing
 // Extension's providerConfig. Idempotent.
-func EnsureAuditingBackend(ctx context.Context, c client.Client, namespace string) error {
+func EnsureAuditingBackend(ctx context.Context, c client.Client, namespace, shootName string) error {
 	ext, cfg, err := getAuditingConfig(ctx, c, namespace)
 	if err != nil {
 		return err
 	}
 
 	url := fmt.Sprintf(persephoneBackendURL, ReceiverServiceName)
+	secretRef := shootName + "." + ForwarderTLSResourceName
 
 	cfg.Backends = removeBackendByURL(cfg.Backends, url)
 	cfg.Backends = append(cfg.Backends, auditBackend{
 		DeliveryMode: "BestEffort",
 		HTTP: &auditBackendHTTP{
 			URL: url,
-			TLS: &auditBackendTLS{SecretReferenceName: ForwarderTLSResourceName},
+			TLS: &auditBackendTLS{SecretReferenceName: secretRef},
 		},
 	})
 

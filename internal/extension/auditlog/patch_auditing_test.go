@@ -30,9 +30,10 @@ var auditingTestScheme = func() *runtime.Scheme {
 
 var _ = Describe("EnsureAuditingBackend", func() {
 	var (
-		ctx context.Context
-		c   client.Client
-		ns  = "shoot--proj--name"
+		ctx       context.Context
+		c         client.Client
+		ns        = "shoot--proj--name"
+		shootName = "name"
 	)
 
 	BeforeEach(func() {
@@ -48,7 +49,7 @@ var _ = Describe("EnsureAuditingBackend", func() {
 	})
 
 	It("adds the persephone backend to an Extension with empty providerConfig", func() {
-		Expect(auditlog.EnsureAuditingBackend(ctx, c, ns)).To(Succeed())
+		Expect(auditlog.EnsureAuditingBackend(ctx, c, ns, shootName)).To(Succeed())
 
 		ext := &extensionsv1alpha1.Extension{}
 		Expect(c.Get(ctx, client.ObjectKey{Name: "auditing", Namespace: ns}, ext)).To(Succeed())
@@ -64,12 +65,12 @@ var _ = Describe("EnsureAuditingBackend", func() {
 		backend := backends[0].(map[string]any)
 		httpCfg := backend["http"].(map[string]any)
 		Expect(httpCfg["url"]).To(Equal("https://persephone-auditlog-receiver/audit"))
-		Expect(httpCfg["tls"].(map[string]any)["secretReferenceName"]).To(Equal(auditlog.ForwarderTLSResourceName))
+		Expect(httpCfg["tls"].(map[string]any)["secretReferenceName"]).To(Equal(shootName + "." + auditlog.ForwarderTLSResourceName))
 	})
 
 	It("is idempotent — does not add a second backend on re-reconcile", func() {
-		Expect(auditlog.EnsureAuditingBackend(ctx, c, ns)).To(Succeed())
-		Expect(auditlog.EnsureAuditingBackend(ctx, c, ns)).To(Succeed())
+		Expect(auditlog.EnsureAuditingBackend(ctx, c, ns, shootName)).To(Succeed())
+		Expect(auditlog.EnsureAuditingBackend(ctx, c, ns, shootName)).To(Succeed())
 
 		ext := &extensionsv1alpha1.Extension{}
 		Expect(c.Get(ctx, client.ObjectKey{Name: "auditing", Namespace: ns}, ext)).To(Succeed())
