@@ -69,7 +69,7 @@ func (o *Options) AddFlags() {
 		"Swift container to write audit event objects to.")
 	flag.StringVar(&o.Prefix, "prefix", "",
 		"Object key prefix inside the container (e.g. 'shoot--project--name/').")
-	flag.IntVar(&o.FlushIntervalSeconds, "flush-interval", 30,
+	flag.IntVar(&o.FlushIntervalSeconds, "flush-interval", 300,
 		"Seconds between periodic flushes to Swift.")
 	flag.IntVar(&o.MaxEvents, "max-events", 10000,
 		"Maximum buffered events before an immediate flush is triggered.")
