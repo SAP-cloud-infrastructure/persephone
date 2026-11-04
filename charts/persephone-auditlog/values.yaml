@@ -1,0 +1,14 @@
+image:
+  repository: keppel.eu-de-1.cloud.sap/ccloud/persephone/persephone-auditlog
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+
+healthPort: 8081
+metricsPort: 8080
