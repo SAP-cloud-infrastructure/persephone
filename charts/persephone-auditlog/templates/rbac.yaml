@@ -21,6 +21,10 @@ rules:
   - apiGroups: [coordination.k8s.io]
     resources: [leases]
     verbs: [get, list, watch, create, update, patch]
+  # controller-runtime cache needs namespace list/watch (Extension objects are cluster-scoped)
+  - apiGroups: [""]
+    resources: [namespaces]
+    verbs: [get, list, watch]
   # Events
   - apiGroups: [""]
     resources: [events]
