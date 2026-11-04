@@ -18,7 +18,7 @@ import (
 
 const (
 	auditingExtensionName = "auditing"
-	persephoneBackendURL  = "https://%s.%s.svc:%d/audit"
+	persephoneBackendURL  = "https://%s/audit"
 )
 
 type auditConfiguration struct {
@@ -38,7 +38,7 @@ type auditBackendHTTP struct {
 }
 
 type auditBackendTLS struct {
-	SecretName string `json:"secretName"`
+	SecretReferenceName string `json:"secretReferenceName"`
 }
 
 // EnsureAuditingBackend upserts the persephone backend into the auditing
@@ -49,14 +49,14 @@ func EnsureAuditingBackend(ctx context.Context, c client.Client, namespace strin
 		return err
 	}
 
-	url := fmt.Sprintf(persephoneBackendURL, ReceiverServiceName, namespace, receiverPort)
+	url := fmt.Sprintf(persephoneBackendURL, ReceiverServiceName)
 
 	cfg.Backends = removeBackendByURL(cfg.Backends, url)
 	cfg.Backends = append(cfg.Backends, auditBackend{
 		DeliveryMode: "BestEffort",
 		HTTP: &auditBackendHTTP{
 			URL: url,
-			TLS: &auditBackendTLS{SecretName: ForwarderClientTLSSecretName},
+			TLS: &auditBackendTLS{SecretReferenceName: ForwarderTLSResourceName},
 		},
 	})
 
@@ -71,7 +71,7 @@ func RemoveAuditingBackend(ctx context.Context, c client.Client, namespace strin
 		return err
 	}
 
-	url := fmt.Sprintf(persephoneBackendURL, ReceiverServiceName, namespace, receiverPort)
+	url := fmt.Sprintf(persephoneBackendURL, ReceiverServiceName)
 	cfg.Backends = removeBackendByURL(cfg.Backends, url)
 
 	return patchAuditingConfig(ctx, c, ext, cfg)

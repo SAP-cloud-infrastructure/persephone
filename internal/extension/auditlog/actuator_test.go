@@ -43,8 +43,8 @@ var _ = Describe("Actuator.Delete", func() {
 				map[string]any{
 					"deliveryMode": "BestEffort",
 					"http": map[string]any{
-						"url": "https://persephone-auditlog-receiver." + ns + ".svc:8443/audit",
-						"tls": map[string]any{"secretName": auditlog.ForwarderClientTLSSecretName},
+						"url": "https://persephone-auditlog-receiver/audit",
+						"tls": map[string]any{"secretReferenceName": auditlog.ForwarderTLSResourceName},
 					},
 				},
 			},

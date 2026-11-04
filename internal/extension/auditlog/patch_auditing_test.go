@@ -63,8 +63,8 @@ var _ = Describe("EnsureAuditingBackend", func() {
 
 		backend := backends[0].(map[string]any)
 		httpCfg := backend["http"].(map[string]any)
-		Expect(httpCfg["url"]).To(ContainSubstring("persephone-auditlog-receiver." + ns + ".svc"))
-		Expect(httpCfg["tls"].(map[string]any)["secretName"]).To(Equal(auditlog.ForwarderClientTLSSecretName))
+		Expect(httpCfg["url"]).To(Equal("https://persephone-auditlog-receiver/audit"))
+		Expect(httpCfg["tls"].(map[string]any)["secretReferenceName"]).To(Equal(auditlog.ForwarderTLSResourceName))
 	})
 
 	It("is idempotent — does not add a second backend on re-reconcile", func() {
@@ -92,8 +92,8 @@ var _ = Describe("RemoveAuditingBackend", func() {
 				map[string]any{
 					"deliveryMode": "BestEffort",
 					"http": map[string]any{
-						"url": "https://persephone-auditlog-receiver." + ns + ".svc:8443/audit",
-						"tls": map[string]any{"secretName": auditlog.ForwarderClientTLSSecretName},
+				"url": "https://persephone-auditlog-receiver/audit",
+			"tls": map[string]any{"secretReferenceName": auditlog.ForwarderTLSResourceName},
 					},
 				},
 			},

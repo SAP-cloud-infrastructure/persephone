@@ -16,6 +16,10 @@ const (
 	CASecretName                 = "ca-persephone-auditlog"
 	ReceiverTLSSecretName        = "persephone-auditlog-receiver-tls"
 	ForwarderClientTLSSecretName = "persephone-auditlog-forwarder-client-tls"
+
+	// ForwarderTLSResourceName is the name used in shoot spec.resources and the
+	// auditing Extension providerConfig secretReferenceName.
+	ForwarderTLSResourceName = "persephone-auditlog-forwarder-tls"
 )
 
 // SecretConfigs returns the SecretsManager configs for the auditlog extension TLS material.
