@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/sapcc/go-api-declarations/bininfo"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	controllerruntime "sigs.k8s.io/controller-runtime"
@@ -28,6 +29,7 @@ import (
 )
 
 func main() {
+	bininfo.HandleVersionArgument()
 	opts := &options.Options{}
 	opts.AddFlags()
 	flag.Parse()
