@@ -8,7 +8,7 @@ rules:
   # Watch and patch Extension objects (persephone-auditlog and auditing types)
   - apiGroups: [extensions.gardener.cloud]
     resources: [extensions, extensions/status, clusters]
-    verbs: [get, list, watch, patch, update]
+    verbs: [get, list, watch, create, patch, update]
   # Deploy and manage receiver Deployment + Service in shoot namespaces
   - apiGroups: ["", apps]
     resources: [deployments, services, secrets, configmaps, serviceaccounts]

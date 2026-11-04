@@ -10,6 +10,8 @@ import (
 	"fmt"
 
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -77,7 +79,27 @@ func RemoveAuditingBackend(ctx context.Context, c client.Client, namespace strin
 
 func getAuditingConfig(ctx context.Context, c client.Client, namespace string) (*extensionsv1alpha1.Extension, *auditConfiguration, error) {
 	ext := &extensionsv1alpha1.Extension{}
-	if err := c.Get(ctx, client.ObjectKey{Name: auditingExtensionName, Namespace: namespace}, ext); err != nil {
+	err := c.Get(ctx, client.ObjectKey{Name: auditingExtensionName, Namespace: namespace}, ext)
+	if errors.IsNotFound(err) {
+		ext = &extensionsv1alpha1.Extension{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: extensionsv1alpha1.SchemeGroupVersion.String(),
+				Kind:       "Extension",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      auditingExtensionName,
+				Namespace: namespace,
+			},
+			Spec: extensionsv1alpha1.ExtensionSpec{
+				DefaultSpec: extensionsv1alpha1.DefaultSpec{
+					Type: auditingExtensionName,
+				},
+			},
+		}
+		if createErr := c.Create(ctx, ext); createErr != nil {
+			return nil, nil, fmt.Errorf("create auditing Extension: %w", createErr)
+		}
+	} else if err != nil {
 		return nil, nil, fmt.Errorf("get auditing Extension: %w", err)
 	}
 
