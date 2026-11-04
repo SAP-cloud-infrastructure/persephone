@@ -14,6 +14,9 @@ import (
 	extensionssecretsmanager "github.com/gardener/gardener/extensions/pkg/util/secret/manager"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/clock"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -23,6 +26,10 @@ import (
 type Actuator struct {
 	Client        client.Client
 	ReceiverImage string
+	// GardenClient is an optional client for the virtual garden cluster.
+	// When set, the actuator syncs the forwarder TLS cert to the project namespace
+	// so the auditing extension can reference it via spec.resources.
+	GardenClient client.Client
 }
 
 // Reconcile ensures the receiver Deployment, Service, TLS secrets, and auditing
@@ -78,6 +85,12 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		return fmt.Errorf("ensure auditing backend: %w", err)
 	}
 
+	if a.GardenClient != nil {
+		if err := a.syncForwarderTLSToGarden(ctx, secrets, cluster.Shoot.Namespace); err != nil {
+			return fmt.Errorf("sync forwarder TLS to garden: %w", err)
+		}
+	}
+
 	return secretsManager.Cleanup(ctx)
 }
 
@@ -128,4 +141,40 @@ func expandPrefix(prefix, shootName string) (string, error) {
 		return "", err
 	}
 	return buf.String(), nil
+}
+
+// syncForwarderTLSToGarden creates or updates a stable-named Secret in the virtual garden
+// project namespace containing the forwarder client TLS material. The shoot's spec.resources
+// must reference this secret under ForwarderTLSResourceName so the auditing extension can
+// mount it into the forwarder pod.
+func (a *Actuator) syncForwarderTLSToGarden(ctx context.Context, secrets map[string]*corev1.Secret, projectNamespace string) error {
+	src := secrets[ForwarderClientTLSSecretName]
+	if src == nil {
+		return fmt.Errorf("seed secret %q not found", ForwarderClientTLSSecretName)
+	}
+
+	desired := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      ForwarderTLSResourceName,
+			Namespace: projectNamespace,
+		},
+		Data: map[string][]byte{
+			"client.crt": src.Data["tls.crt"],
+			"client.key": src.Data["tls.key"],
+			"ca.crt":     src.Data["ca.crt"],
+		},
+	}
+
+	existing := &corev1.Secret{}
+	err := a.GardenClient.Get(ctx, client.ObjectKeyFromObject(desired), existing)
+	if errors.IsNotFound(err) {
+		return a.GardenClient.Create(ctx, desired)
+	}
+	if err != nil {
+		return err
+	}
+
+	patch := client.MergeFrom(existing.DeepCopy())
+	existing.Data = desired.Data
+	return a.GardenClient.Patch(ctx, existing, patch)
 }

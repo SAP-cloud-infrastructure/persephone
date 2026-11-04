@@ -16,12 +16,14 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	controllerruntime "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cluster"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/sap-cloud-infrastructure/persephone/cmd/persephone-extension/options"
 	"github.com/sap-cloud-infrastructure/persephone/internal/extension"
@@ -67,7 +69,25 @@ func run(ctx context.Context, logger logr.Logger, opts *options.Options) error {
 		return err
 	}
 
-	if err := extension.AddToManager(ctx, mgr, opts.ReceiverImage); err != nil {
+	var gardenCluster cluster.Cluster
+	if kubeconfigPath := os.Getenv("GARDEN_KUBECONFIG"); kubeconfigPath != "" {
+		cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+		if err != nil {
+			return fmt.Errorf("build garden REST config: %w", err)
+		}
+		gardenCluster, err = cluster.New(cfg, func(o *cluster.Options) {
+			o.Scheme = kubernetes.GardenerScheme
+			o.Logger = logger
+		})
+		if err != nil {
+			return fmt.Errorf("create garden cluster: %w", err)
+		}
+		if err := mgr.Add(gardenCluster); err != nil {
+			return fmt.Errorf("add garden cluster to manager: %w", err)
+		}
+	}
+
+	if err := extension.AddToManager(ctx, mgr, opts.ReceiverImage, gardenCluster); err != nil {
 		return fmt.Errorf("add extension controllers: %w", err)
 	}
 
