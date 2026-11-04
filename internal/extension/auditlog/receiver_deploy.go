@@ -50,6 +50,7 @@ func ReceiverDeployment(namespace, image, container, prefix, tlsSecretName strin
 						{
 							Name:  "receiver",
 							Image: image,
+							Command: []string{"/usr/bin/persephone-auditlog-receiver"},
 							Args: []string{
 								"--addr=:8443",
 								"--cert-dir=" + certMountPath,
