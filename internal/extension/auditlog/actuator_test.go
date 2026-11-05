@@ -6,13 +6,12 @@ package auditlog_test
 
 import (
 	"context"
-	"encoding/json"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
-	gardenercorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -27,55 +26,45 @@ var actuatorTestScheme = func() *runtime.Scheme {
 	s := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(s))
 	utilruntime.Must(extensionsv1alpha1.AddToScheme(s))
-	utilruntime.Must(gardenercorev1beta1.AddToScheme(s))
 	return s
 }()
 
 var _ = Describe("Actuator.Delete", func() {
-	It("removes auditing backend on delete", func() {
+	It("removes receiver Service and webhook kubeconfig secret on delete", func() {
 		ctx := context.Background()
 		ns := "shoot--proj--shoot"
-
-		rawCfg, _ := json.Marshal(map[string]any{
-			"apiVersion": "auditing.extensions.gardener.cloud/v1alpha1",
-			"kind":       "AuditConfiguration",
-			"backends": []any{
-				map[string]any{
-					"deliveryMode": "BestEffort",
-					"http": map[string]any{
-						"url": "https://persephone-auditlog-receiver/audit",
-						"tls": map[string]any{"secretReferenceName": auditlog.ForwarderTLSResourceName},
-					},
-				},
-			},
-		})
 
 		ex := &extensionsv1alpha1.Extension{
 			ObjectMeta: metav1.ObjectMeta{Name: "persephone-auditlog", Namespace: ns},
 		}
-		auditingExt := &extensionsv1alpha1.Extension{
-			ObjectMeta: metav1.ObjectMeta{Name: "auditing", Namespace: ns},
-			Spec: extensionsv1alpha1.ExtensionSpec{
-				DefaultSpec: extensionsv1alpha1.DefaultSpec{
-					ProviderConfig: &runtime.RawExtension{Raw: rawCfg},
-				},
+		webhookSecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      auditlog.WebhookKubeconfigSecretName,
+				Namespace: ns,
+			},
+		}
+		svc := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      auditlog.ReceiverServiceName,
+				Namespace: ns,
 			},
 		}
 
 		c := fake.NewClientBuilder().
 			WithScheme(actuatorTestScheme).
-			WithObjects(ex, auditingExt).
+			WithObjects(ex, webhookSecret, svc).
 			Build()
 
 		a := &auditlog.Actuator{Client: c, ReceiverImage: "receiver:test"}
 		Expect(a.Delete(ctx, logr.Discard(), ex)).To(Succeed())
 
-		updated := &extensionsv1alpha1.Extension{}
-		Expect(c.Get(ctx, client.ObjectKey{Name: "auditing", Namespace: ns}, updated)).To(Succeed())
+		// Webhook kubeconfig secret should be gone.
+		err := c.Get(ctx, client.ObjectKey{Name: auditlog.WebhookKubeconfigSecretName, Namespace: ns}, &corev1.Secret{})
+		Expect(err).To(HaveOccurred())
 
-		var cfg map[string]any
-		Expect(json.Unmarshal(updated.Spec.ProviderConfig.Raw, &cfg)).To(Succeed())
-		Expect(cfg["backends"].([]any)).To(BeEmpty())
+		// Service should be gone.
+		err = c.Get(ctx, client.ObjectKey{Name: auditlog.ReceiverServiceName, Namespace: ns}, &corev1.Service{})
+		Expect(err).To(HaveOccurred())
 	})
 })
 

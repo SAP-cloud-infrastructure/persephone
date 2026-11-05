@@ -54,16 +54,24 @@ func run(ctx context.Context, logger logr.Logger, opts *options.Options) error {
 		return fmt.Errorf("openstack credentials: %w", err)
 	}
 
-	writer, err := receiver.NewSwiftWriter(ctx, logger.WithName("swift"),
-		authOpts, opts.Container, opts.Prefix)
+	var objectLock *receiver.ObjectLockCfg
+	if opts.ObjectLockEnabled {
+		objectLock = &receiver.ObjectLockCfg{
+			RetentionDays: int32(opts.ObjectLockRetentionDays),
+			Mode:          opts.ObjectLockMode,
+		}
+	}
+
+	writer, err := receiver.NewS3Writer(ctx, logger.WithName("s3"),
+		authOpts, opts.Bucket, opts.Prefix, objectLock)
 	if err != nil {
-		return fmt.Errorf("swift writer: %w", err)
+		return fmt.Errorf("s3 writer: %w", err)
 	}
 
 	flushInterval := time.Duration(opts.FlushIntervalSeconds) * time.Second
 	buf := receiver.NewBuffer(flushInterval, opts.MaxEvents, func(events []auditv1.Event) {
 		if err := writer.Write(ctx, events); err != nil {
-			logger.Error(err, "failed to write events to swift")
+			logger.Error(err, "failed to write events to s3")
 		}
 	})
 	go buf.Start(ctx)

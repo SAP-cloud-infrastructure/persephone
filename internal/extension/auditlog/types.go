@@ -18,11 +18,20 @@ type AuditLogConfig struct {
 	ObjectStore     ObjectStoreConfig `json:"objectStore"`
 }
 
-// ObjectStoreConfig holds Swift object storage target configuration.
+// ObjectStoreConfig holds Ceph S3 object storage target configuration.
 type ObjectStoreConfig struct {
-	Container string `json:"container"`
+	Bucket string `json:"bucket"`
 	// Prefix may contain "{{.shootName}}" which is expanded by the actuator.
-	Prefix string `json:"prefix"`
+	Prefix     string            `json:"prefix"`
+	ObjectLock *ObjectLockConfig `json:"objectLock,omitempty"`
+}
+
+// ObjectLockConfig configures S3 Object Lock (WORM) for audit log objects.
+// Mode must be "COMPLIANCE" or "GOVERNANCE".
+type ObjectLockConfig struct {
+	Enabled       bool   `json:"enabled"`
+	RetentionDays int32  `json:"retentionDays"`
+	Mode          string `json:"mode"`
 }
 
 const ReceiverServiceName = "persephone-auditlog-receiver"

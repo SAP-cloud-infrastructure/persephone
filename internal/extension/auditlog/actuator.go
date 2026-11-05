@@ -16,6 +16,8 @@ import (
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
+	clientcmdv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 	"k8s.io/utils/clock"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -27,8 +29,8 @@ type Actuator struct {
 	ReceiverImage string
 }
 
-// Reconcile ensures the receiver Deployment, Service, TLS secrets, and auditing
-// Extension backend are all in place.
+// Reconcile ensures the receiver Deployment, Service, TLS secrets, and audit webhook
+// kubeconfig are all in place.
 func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	namespace := ex.Namespace
 
@@ -66,7 +68,7 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 	}
 
 	receiverTLSName := secrets[ReceiverTLSSecretName].Name
-	deployment := ReceiverDeployment(namespace, a.ReceiverImage, cfg.ObjectStore.Container, prefix, receiverTLSName)
+	deployment := ReceiverDeployment(namespace, a.ReceiverImage, cfg.ObjectStore.Bucket, prefix, receiverTLSName, cfg.ObjectStore.ObjectLock)
 	if err := applyObject(ctx, a.Client, deployment); err != nil {
 		return fmt.Errorf("apply receiver Deployment: %w", err)
 	}
@@ -76,28 +78,27 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		return fmt.Errorf("apply receiver Service: %w", err)
 	}
 
-	if err := EnsureAuditingBackend(ctx, a.Client, namespace, cluster.Shoot.Name); err != nil {
-		return fmt.Errorf("ensure auditing backend: %w", err)
-	}
-
-	if err := a.syncForwarderTLSToSeed(ctx, secrets, cluster.Shoot.Name, namespace); err != nil {
-		return fmt.Errorf("sync forwarder TLS ref secret: %w", err)
+	if err := a.syncWebhookKubeconfigToSeed(ctx, secrets, namespace); err != nil {
+		return fmt.Errorf("sync webhook kubeconfig secret: %w", err)
 	}
 
 	return secretsManager.Cleanup(ctx)
 }
 
-// Delete removes the receiver resources and cleans up the auditing backend entry.
+// Delete removes the receiver resources and the webhook kubeconfig.
 func (a *Actuator) Delete(ctx context.Context, _ logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	namespace := ex.Namespace
 
-	if err := RemoveAuditingBackend(ctx, a.Client, namespace); err != nil {
-		return fmt.Errorf("remove auditing backend: %w", err)
+	if err := deleteObject(ctx, a.Client, &corev1.Secret{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+		ObjectMeta: metav1.ObjectMeta{Name: WebhookKubeconfigSecretName, Namespace: namespace},
+	}); err != nil {
+		return fmt.Errorf("delete webhook kubeconfig secret: %w", err)
 	}
 	if err := deleteObject(ctx, a.Client, ReceiverService(namespace)); err != nil {
 		return fmt.Errorf("delete receiver Service: %w", err)
 	}
-	return deleteObject(ctx, a.Client, ReceiverDeployment(namespace, "", "", "", ""))
+	return deleteObject(ctx, a.Client, ReceiverDeployment(namespace, "", "", "", "", nil))
 }
 
 // ForceDelete skips graceful cleanup — used during forced shoot deletion.
@@ -136,27 +137,70 @@ func expandPrefix(prefix, shootName string) (string, error) {
 	return buf.String(), nil
 }
 
-// syncForwarderTLSToSeed creates or updates a ref-prefixed Secret in the seed shoot namespace
-// containing the forwarder client TLS material. The auditing extension reads this secret as
-// ref-<secretReferenceName>, so we write it pre-prefixed here so the gardenlet copy from
-// the virtual garden project namespace is not needed.
-func (a *Actuator) syncForwarderTLSToSeed(ctx context.Context, secrets map[string]*corev1.Secret, shootName, namespace string) error {
+// syncWebhookKubeconfigToSeed creates or updates a Secret in the seed shoot namespace
+// containing the kubeconfig that kube-apiserver uses to authenticate to the audit webhook receiver.
+func (a *Actuator) syncWebhookKubeconfigToSeed(ctx context.Context, secrets map[string]*corev1.Secret, namespace string) error {
 	src := secrets[ForwarderClientTLSSecretName]
 	if src == nil {
 		return fmt.Errorf("seed secret %q not found", ForwarderClientTLSSecretName)
 	}
 
+	serverURL := fmt.Sprintf("https://%s.%s.svc/audit", ReceiverServiceName, namespace)
+	kubeconfig, err := buildWebhookKubeconfig(serverURL, src.Data["ca.crt"], src.Data["tls.crt"], src.Data["tls.key"])
+	if err != nil {
+		return fmt.Errorf("build webhook kubeconfig: %w", err)
+	}
+
 	desired := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "ref-" + shootName + "." + ForwarderTLSResourceName,
+			Name:      WebhookKubeconfigSecretName,
 			Namespace: namespace,
 		},
 		Data: map[string][]byte{
-			"client.crt": src.Data["tls.crt"],
-			"client.key": src.Data["tls.key"],
-			"ca.crt":     src.Data["ca.crt"],
+			"kubeconfig.yaml": kubeconfig,
 		},
 	}
 	return applyObject(ctx, a.Client, desired)
+}
+
+func buildWebhookKubeconfig(serverURL string, caCert, clientCert, clientKey []byte) ([]byte, error) {
+	cfg := &clientcmdv1.Config{
+		APIVersion: "v1",
+		Kind:       "Config",
+		Clusters: []clientcmdv1.NamedCluster{
+			{
+				Name: "receiver",
+				Cluster: clientcmdv1.Cluster{
+					Server:                   serverURL,
+					CertificateAuthorityData: caCert,
+				},
+			},
+		},
+		AuthInfos: []clientcmdv1.NamedAuthInfo{
+			{
+				Name: "apiserver",
+				AuthInfo: clientcmdv1.AuthInfo{
+					ClientCertificateData: clientCert,
+					ClientKeyData:         clientKey,
+				},
+			},
+		},
+		Contexts: []clientcmdv1.NamedContext{
+			{
+				Name: "default",
+				Context: clientcmdv1.Context{
+					Cluster:  "receiver",
+					AuthInfo: "apiserver",
+				},
+			},
+		},
+		CurrentContext: "default",
+	}
+
+	var buf bytes.Buffer
+	if err := clientcmdlatest.Codec.Encode(cfg, &buf); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

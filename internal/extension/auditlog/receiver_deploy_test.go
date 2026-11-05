@@ -14,20 +14,20 @@ import (
 
 var _ = Describe("ReceiverDeployment", func() {
 	It("creates a Deployment in the given namespace", func() {
-		d := auditlog.ReceiverDeployment("shoot--p--n", "img:sha", "my-bucket", "logs/", "persephone-auditlog-receiver-tls-abc123")
+		d := auditlog.ReceiverDeployment("shoot--p--n", "img:sha", "my-bucket", "logs/", "persephone-auditlog-receiver-tls-abc123", nil)
 		Expect(d.Namespace).To(Equal("shoot--p--n"))
 		Expect(d.Name).To(Equal(auditlog.ReceiverServiceName))
 	})
 
-	It("passes container and prefix as flags", func() {
-		d := auditlog.ReceiverDeployment("ns", "img:sha", "bucket", "pfx/", "tls-secret-versioned")
+	It("passes bucket and prefix as flags", func() {
+		d := auditlog.ReceiverDeployment("ns", "img:sha", "bucket", "pfx/", "tls-secret-versioned", nil)
 		args := d.Spec.Template.Spec.Containers[0].Args
-		Expect(args).To(ContainElement("--container=bucket"))
+		Expect(args).To(ContainElement("--bucket=bucket"))
 		Expect(args).To(ContainElement("--prefix=pfx/"))
 	})
 
 	It("mounts receiver-tls secret with versioned name", func() {
-		d := auditlog.ReceiverDeployment("ns", "img:sha", "b", "p", "persephone-auditlog-receiver-tls-abc")
+		d := auditlog.ReceiverDeployment("ns", "img:sha", "b", "p", "persephone-auditlog-receiver-tls-abc", nil)
 		vols := d.Spec.Template.Spec.Volumes
 		Expect(vols).To(ContainElement(HaveField("Name", "receiver-tls")))
 		tlsVol := vols[0]
@@ -37,11 +37,20 @@ var _ = Describe("ReceiverDeployment", func() {
 	})
 
 	It("maps cloudprovider secret keys to OS_ env vars", func() {
-		d := auditlog.ReceiverDeployment("ns", "img:sha", "b", "p", "tls-secret")
+		d := auditlog.ReceiverDeployment("ns", "img:sha", "b", "p", "tls-secret", nil)
 		env := d.Spec.Template.Spec.Containers[0].Env
 		Expect(env).To(ContainElement(HaveField("Name", "OS_AUTH_URL")))
 		Expect(env).To(ContainElement(HaveField("Name", "OS_APPLICATION_CREDENTIAL_ID")))
 		Expect(env).To(ContainElement(HaveField("Name", "OS_APPLICATION_CREDENTIAL_SECRET")))
+	})
+
+	It("adds object lock flags when ObjectLockConfig is provided", func() {
+		ol := &auditlog.ObjectLockConfig{Enabled: true, RetentionDays: 90, Mode: "COMPLIANCE"}
+		d := auditlog.ReceiverDeployment("ns", "img:sha", "b", "p", "tls-secret", ol)
+		args := d.Spec.Template.Spec.Containers[0].Args
+		Expect(args).To(ContainElement("--object-lock"))
+		Expect(args).To(ContainElement("--object-lock-retention-days=90"))
+		Expect(args).To(ContainElement("--object-lock-mode=COMPLIANCE"))
 	})
 })
 

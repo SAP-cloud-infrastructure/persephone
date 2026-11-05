@@ -19,22 +19,36 @@ type Options struct {
 	Addr string
 	// CertDir is the directory containing TLS certificates.
 	CertDir string
-	// Container is the Swift container to write objects to.
-	Container string
-	// Prefix is the object key prefix inside the container.
+	// Bucket is the Ceph S3 bucket to write objects to.
+	Bucket string
+	// Prefix is the object key prefix inside the bucket.
 	Prefix string
-	// FlushInterval is the flush interval in seconds.
+	// FlushIntervalSeconds is the flush interval in seconds.
 	FlushIntervalSeconds int
 	// MaxEvents is the maximum number of events to buffer before flushing.
 	MaxEvents int
+	// ObjectLockEnabled enables S3 Object Lock on the bucket.
+	ObjectLockEnabled bool
+	// ObjectLockRetentionDays is the number of days to retain locked objects.
+	ObjectLockRetentionDays int
+	// ObjectLockMode is the Object Lock retention mode: "COMPLIANCE" or "GOVERNANCE".
+	ObjectLockMode string
 	// Zap holds zap logger flags.
 	Zap zap.Options
 }
 
-// Validate validates the options and fills in OpenStack credentials from env.
+// Validate validates the options.
 func (o *Options) Validate() error {
-	if o.Container == "" {
-		return errors.New("container flag must be provided")
+	if o.Bucket == "" {
+		return errors.New("bucket flag must be provided")
+	}
+	if o.ObjectLockEnabled {
+		if o.ObjectLockRetentionDays <= 0 {
+			return errors.New("object-lock-retention-days must be positive when object lock is enabled")
+		}
+		if o.ObjectLockMode != "COMPLIANCE" && o.ObjectLockMode != "GOVERNANCE" {
+			return errors.New("object-lock-mode must be COMPLIANCE or GOVERNANCE")
+		}
 	}
 	return nil
 }
@@ -65,14 +79,20 @@ func (o *Options) AddFlags() {
 		"Address the mTLS HTTP server binds to.")
 	flag.StringVar(&o.CertDir, "cert-dir", "/certs",
 		"Directory containing tls.crt, tls.key, and ca.crt for mTLS.")
-	flag.StringVar(&o.Container, "container", "",
-		"Swift container to write audit event objects to.")
+	flag.StringVar(&o.Bucket, "bucket", "",
+		"Ceph S3 bucket to write audit event objects to.")
 	flag.StringVar(&o.Prefix, "prefix", "",
-		"Object key prefix inside the container (e.g. 'shoot--project--name/').")
+		"Object key prefix inside the bucket (e.g. 'shoot--project--name/').")
 	flag.IntVar(&o.FlushIntervalSeconds, "flush-interval", 300,
-		"Seconds between periodic flushes to Swift.")
+		"Seconds between periodic flushes.")
 	flag.IntVar(&o.MaxEvents, "max-events", 10000,
 		"Maximum buffered events before an immediate flush is triggered.")
+	flag.BoolVar(&o.ObjectLockEnabled, "object-lock", false,
+		"Enable S3 Object Lock (WORM) on the bucket.")
+	flag.IntVar(&o.ObjectLockRetentionDays, "object-lock-retention-days", 0,
+		"Number of days to retain locked objects.")
+	flag.StringVar(&o.ObjectLockMode, "object-lock-mode", "COMPLIANCE",
+		"Object Lock retention mode: COMPLIANCE or GOVERNANCE.")
 
 	o.Zap = zap.Options{Development: false}
 	o.Zap.BindFlags(flag.CommandLine)

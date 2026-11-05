@@ -7,19 +7,22 @@ package extension
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
+	webhookcmd "github.com/gardener/gardener/extensions/pkg/webhook/cmd"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 
 	"github.com/sap-cloud-infrastructure/persephone/internal/extension/auditlog"
+	auditlogwebhook "github.com/sap-cloud-infrastructure/persephone/internal/extension/auditlog/webhook"
 )
 
 const extensionType = "persephone-auditlog"
 
-// AddToManager registers the persephone-auditlog extension actuator with the manager.
+// AddToManager registers the persephone-auditlog extension actuator and webhook with the manager.
 func AddToManager(ctx context.Context, mgr manager.Manager, receiverImage string) error {
 	actuator := &auditlog.Actuator{
 		Client:        mgr.GetClient(),
@@ -40,5 +43,25 @@ func AddToManager(ctx context.Context, mgr manager.Manager, receiverImage string
 	}); err != nil {
 		return fmt.Errorf("add %s controller: %w", extensionType, err)
 	}
+
+	webhookOpts := webhookcmd.NewAddToManagerOptions(
+		extensionType,
+		"",   // no shoot webhook managed resource — only seed webhook
+		nil,  // no shoot namespace selector
+		nil,  // no general options
+		&webhookcmd.ServerOptions{
+			Namespace: os.Getenv("WEBHOOK_CONFIG_NAMESPACE"),
+		},
+		webhookcmd.NewSwitchOptions(
+			webhookcmd.Switch("controlplane", auditlogwebhook.AddToManager),
+		),
+	)
+	if err := webhookOpts.Complete(); err != nil {
+		return fmt.Errorf("complete webhook options: %w", err)
+	}
+	if _, err := webhookOpts.Completed().AddToManager(ctx, mgr, nil); err != nil {
+		return fmt.Errorf("add webhook to manager: %w", err)
+	}
+
 	return nil
 }

@@ -20,15 +20,15 @@ var _ = Describe("DecodeAuditLogConfig", func() {
 			"apiVersion": "extension.persephone.cloud/v1alpha1",
 			"kind":       "AuditLogConfig",
 			"objectStore": map[string]any{
-				"container": "shoot-audit-logs",
-				"prefix":    "shoots/my-shoot/",
+				"bucket": "shoot-audit-logs",
+				"prefix": "shoots/my-shoot/",
 			},
 		})
 		Expect(err).NotTo(HaveOccurred())
 
 		cfg, err := auditlog.DecodeAuditLogConfig(&runtime.RawExtension{Raw: raw})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(cfg.ObjectStore.Container).To(Equal("shoot-audit-logs"))
+		Expect(cfg.ObjectStore.Bucket).To(Equal("shoot-audit-logs"))
 		Expect(cfg.ObjectStore.Prefix).To(Equal("shoots/my-shoot/"))
 	})
 

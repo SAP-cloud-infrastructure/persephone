@@ -17,9 +17,9 @@ const (
 	ReceiverTLSSecretName        = "persephone-auditlog-receiver-tls"
 	ForwarderClientTLSSecretName = "persephone-auditlog-forwarder-client-tls"
 
-	// ForwarderTLSResourceName is the name used in shoot spec.resources and the
-	// auditing Extension providerConfig secretReferenceName.
-	ForwarderTLSResourceName = "persephone-auditlog-forwarder-tls"
+	// WebhookKubeconfigSecretName is the Secret in the seed shoot namespace that contains
+	// the kubeconfig used by kube-apiserver to authenticate to the audit webhook receiver.
+	WebhookKubeconfigSecretName = "persephone-auditlog-webhook-kubeconfig"
 )
 
 // SecretConfigs returns the SecretsManager configs for the auditlog extension TLS material.
