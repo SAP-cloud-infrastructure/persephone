@@ -28,7 +28,7 @@ rules:
   # Webhook certificate manager needs to list/watch/patch MutatingWebhookConfigurations
   - apiGroups: [admissionregistration.k8s.io]
     resources: [mutatingwebhookconfigurations, validatingwebhookconfigurations]
-    verbs: [get, list, watch, patch, update]
+    verbs: [get, list, watch, create, patch, update]
   # Events
   - apiGroups: [""]
     resources: [events]
