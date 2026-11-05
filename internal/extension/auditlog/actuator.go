@@ -15,7 +15,6 @@ import (
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/clock"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -139,19 +138,18 @@ func expandPrefix(prefix, shootName string) (string, error) {
 
 // syncForwarderTLSToSeed creates or updates a ref-prefixed Secret in the seed shoot namespace
 // containing the forwarder client TLS material. The auditing extension reads this secret as
-// ref-<secretReferenceName>, so we create it pre-prefixed here so no virtual garden write is needed.
+// ref-<secretReferenceName>, so we write it pre-prefixed here so the gardenlet copy from
+// the virtual garden project namespace is not needed.
 func (a *Actuator) syncForwarderTLSToSeed(ctx context.Context, secrets map[string]*corev1.Secret, shootName, namespace string) error {
 	src := secrets[ForwarderClientTLSSecretName]
 	if src == nil {
 		return fmt.Errorf("seed secret %q not found", ForwarderClientTLSSecretName)
 	}
 
-	// The auditing extension reads ref-<secretReferenceName> from the shoot namespace.
-	// We write the secret under that name directly so the gardenlet copy step is not needed.
-	refName := "ref-" + shootName + "." + ForwarderTLSResourceName
 	desired := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      refName,
+			Name:      "ref-" + shootName + "." + ForwarderTLSResourceName,
 			Namespace: namespace,
 		},
 		Data: map[string][]byte{
@@ -160,17 +158,5 @@ func (a *Actuator) syncForwarderTLSToSeed(ctx context.Context, secrets map[strin
 			"ca.crt":     src.Data["ca.crt"],
 		},
 	}
-
-	existing := &corev1.Secret{}
-	err := a.Client.Get(ctx, client.ObjectKeyFromObject(desired), existing)
-	if errors.IsNotFound(err) {
-		return a.Client.Create(ctx, desired)
-	}
-	if err != nil {
-		return err
-	}
-
-	patch := client.MergeFrom(existing.DeepCopy())
-	existing.Data = desired.Data
-	return a.Client.Patch(ctx, existing, patch)
+	return applyObject(ctx, a.Client, desired)
 }
