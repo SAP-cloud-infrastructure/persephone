@@ -15,11 +15,7 @@ import (
 // AuditLogConfig is the providerConfig for the persephone-auditlog Extension.
 type AuditLogConfig struct {
 	metav1.TypeMeta `json:",inline"`
-	// S3EndpointTemplate is the Ceph S3 endpoint URL template for this landscape.
-	// "{region}" is replaced with the shoot's region at reconcile time.
-	// Example: "https://rgw.st1.{region}.cloud.sap"
-	S3EndpointTemplate string            `json:"s3EndpointTemplate"`
-	ObjectStore        ObjectStoreConfig `json:"objectStore"`
+	ObjectStore     ObjectStoreConfig `json:"objectStore"`
 }
 
 // ObjectStoreConfig holds Ceph S3 object storage target configuration.

@@ -13,4 +13,8 @@ resources:
 healthPort: 8081
 metricsPort: 8080
 
-# s3EndpointTemplate is set in the Extension providerConfig, not here.
+# s3EndpointTemplate builds the Ceph S3 endpoint URL per shoot.
+# "{region}" is replaced with the shoot's region at reconcile time.
+# Override in the ControllerDeployment Helm values for your landscape.
+# Example: "https://rgw.st1.{region}.cloud.sap"
+s3EndpointTemplate: ""
