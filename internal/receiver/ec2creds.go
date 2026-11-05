@@ -16,11 +16,13 @@ import (
 )
 
 // FetchEC2Credentials authenticates with OpenStack using authOpts, fetches
-// (or creates) EC2 credentials for the current project, and discovers the
-// S3-compatible endpoint from the service catalog.
+// (or creates) EC2 credentials for the current project, and returns the
+// S3 endpoint. If s3EndpointOverride is non-empty it is used directly;
+// otherwise the endpoint is discovered from the service catalog
+// (type "s3", fallback "object-store").
 //
 // It returns the EC2 access key, secret key, and the S3 endpoint URL.
-func FetchEC2Credentials(ctx context.Context, authOpts gophercloud.AuthOptions) (accessKey, secretKey, s3Endpoint string, err error) {
+func FetchEC2Credentials(ctx context.Context, authOpts gophercloud.AuthOptions, s3EndpointOverride string) (accessKey, secretKey, s3Endpoint string, err error) {
 	provider, err := openstack.AuthenticatedClient(ctx, authOpts)
 	if err != nil {
 		return "", "", "", fmt.Errorf("openstack auth: %w", err)
@@ -52,7 +54,11 @@ func FetchEC2Credentials(ctx context.Context, authOpts gophercloud.AuthOptions) 
 		return "", "", "", err
 	}
 
-	// Discover S3 endpoint; fall back to "object-store" if "s3" not found.
+	if s3EndpointOverride != "" {
+		return cred.Access, cred.Secret, s3EndpointOverride, nil
+	}
+
+	// Discover S3 endpoint from the service catalog.
 	s3Endpoint, err = discoverS3Endpoint(provider)
 	if err != nil {
 		return "", "", "", err

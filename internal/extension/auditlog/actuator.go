@@ -27,6 +27,9 @@ import (
 type Actuator struct {
 	Client        client.Client
 	ReceiverImage string
+	// S3Endpoint is the Ceph RadosGW endpoint URL to pass to receiver pods.
+	// When empty, receivers discover the endpoint from the service catalog.
+	S3Endpoint string
 }
 
 // Reconcile ensures the receiver Deployment, Service, TLS secrets, and audit webhook
@@ -68,7 +71,7 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 	}
 
 	receiverTLSName := secrets[ReceiverTLSSecretName].Name
-	deployment := ReceiverDeployment(namespace, a.ReceiverImage, cfg.ObjectStore.Bucket, prefix, receiverTLSName, cfg.ObjectStore.ObjectLock)
+	deployment := ReceiverDeployment(namespace, a.ReceiverImage, cfg.ObjectStore.Bucket, prefix, a.S3Endpoint, receiverTLSName, cfg.ObjectStore.ObjectLock)
 	if err := applyObject(ctx, a.Client, deployment); err != nil {
 		return fmt.Errorf("apply receiver Deployment: %w", err)
 	}
@@ -98,7 +101,7 @@ func (a *Actuator) Delete(ctx context.Context, _ logr.Logger, ex *extensionsv1al
 	if err := deleteObject(ctx, a.Client, ReceiverService(namespace)); err != nil {
 		return fmt.Errorf("delete receiver Service: %w", err)
 	}
-	return deleteObject(ctx, a.Client, ReceiverDeployment(namespace, "", "", "", "", nil))
+	return deleteObject(ctx, a.Client, ReceiverDeployment(namespace, "", "", "", "", "", nil))
 }
 
 // ForceDelete skips graceful cleanup — used during forced shoot deletion.

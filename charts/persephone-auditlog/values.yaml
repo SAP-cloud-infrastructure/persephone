@@ -12,3 +12,8 @@ resources:
 
 healthPort: 8081
 metricsPort: 8080
+
+# s3Endpoint is the Ceph RadosGW S3 endpoint URL.
+# Pattern: https://rgw.st1.<region>.cloud.sap
+# Example: https://rgw.st1.eu-de-1.cloud.sap
+s3Endpoint: ""

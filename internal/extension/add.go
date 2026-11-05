@@ -23,10 +23,11 @@ import (
 const extensionType = "persephone-auditlog"
 
 // AddToManager registers the persephone-auditlog extension actuator and webhook with the manager.
-func AddToManager(ctx context.Context, mgr manager.Manager, receiverImage string) error {
+func AddToManager(ctx context.Context, mgr manager.Manager, receiverImage, s3Endpoint string) error {
 	actuator := &auditlog.Actuator{
 		Client:        mgr.GetClient(),
 		ReceiverImage: receiverImage,
+		S3Endpoint:    s3Endpoint,
 	}
 
 	if err := extension.Add(mgr, extension.AddArgs{

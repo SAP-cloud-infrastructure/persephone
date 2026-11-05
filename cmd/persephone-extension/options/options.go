@@ -14,6 +14,9 @@ import (
 // Options holds command-line options for the extension binary.
 type Options struct {
 	ReceiverImage string
+	// S3Endpoint is passed through to each shoot's receiver Deployment as --s3-endpoint.
+	// Pattern: https://rgw.st1.<region>.cloud.sap
+	S3Endpoint    string
 	Health        struct{ Addr string }
 	Metrics       struct{ Addr string }
 	Zap           zap.Options
@@ -22,6 +25,8 @@ type Options struct {
 // AddFlags registers flags on the default flag set.
 func (o *Options) AddFlags() {
 	flag.StringVar(&o.ReceiverImage, "receiver-image", "", "Image for the auditlog-receiver (required)")
+	flag.StringVar(&o.S3Endpoint, "s3-endpoint", "",
+		"Ceph S3 endpoint URL passed to each shoot's receiver (e.g. https://rgw.st1.<region>.cloud.sap).")
 	flag.StringVar(&o.Health.Addr, "health-bind-address", ":8081", "Address for health probes")
 	flag.StringVar(&o.Metrics.Addr, "metrics-bind-address", ":8080", "Address for metrics")
 	o.Zap.BindFlags(flag.CommandLine)

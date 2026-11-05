@@ -23,6 +23,9 @@ type Options struct {
 	Bucket string
 	// Prefix is the object key prefix inside the bucket.
 	Prefix string
+	// S3Endpoint overrides endpoint discovery from the OpenStack service catalog.
+	// Use "https://rgw.st1.<region>.cloud.sap".
+	S3Endpoint string
 	// FlushIntervalSeconds is the flush interval in seconds.
 	FlushIntervalSeconds int
 	// MaxEvents is the maximum number of events to buffer before flushing.
@@ -83,6 +86,8 @@ func (o *Options) AddFlags() {
 		"Ceph S3 bucket to write audit event objects to.")
 	flag.StringVar(&o.Prefix, "prefix", "",
 		"Object key prefix inside the bucket (e.g. 'shoot--project--name/').")
+	flag.StringVar(&o.S3Endpoint, "s3-endpoint", "",
+		"Ceph S3 endpoint URL (e.g. https://rgw.st1.<region>.cloud.sap). Overrides service catalog discovery.")
 	flag.IntVar(&o.FlushIntervalSeconds, "flush-interval", 300,
 		"Seconds between periodic flushes.")
 	flag.IntVar(&o.MaxEvents, "max-events", 10000,

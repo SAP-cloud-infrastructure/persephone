@@ -63,7 +63,7 @@ func run(ctx context.Context, logger logr.Logger, opts *options.Options) error {
 	}
 
 	writer, err := receiver.NewS3Writer(ctx, logger.WithName("s3"),
-		authOpts, opts.Bucket, opts.Prefix, objectLock)
+		authOpts, opts.Bucket, opts.Prefix, opts.S3Endpoint, objectLock)
 	if err != nil {
 		return fmt.Errorf("s3 writer: %w", err)
 	}
