@@ -31,7 +31,6 @@ spec:
             - --health-bind-address=:{{ .Values.healthPort }}
             - --metrics-bind-address=:{{ .Values.metricsPort }}
             - --receiver-image={{ .Values.image.repository }}:{{ .Values.image.tag }}
-            - --s3-endpoint-template={{ .Values.s3EndpointTemplate }}
           env:
             - name: LEADER_ELECTION_NAMESPACE
               valueFrom:
