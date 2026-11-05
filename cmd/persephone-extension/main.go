@@ -13,11 +13,9 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/sapcc/go-api-declarations/bininfo"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	controllerruntime "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -69,21 +67,7 @@ func run(ctx context.Context, logger logr.Logger, opts *options.Options) error {
 		return err
 	}
 
-	// Build a direct (non-caching) client for the virtual garden when the
-	// gardenlet injects a kubeconfig via GARDEN_KUBECONFIG.
-	var gardenClient client.Client
-	if kubeconfigPath := os.Getenv("GARDEN_KUBECONFIG"); kubeconfigPath != "" {
-		cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-		if err != nil {
-			return fmt.Errorf("build garden REST config: %w", err)
-		}
-		gardenClient, err = client.New(cfg, client.Options{Scheme: kubernetes.GardenerScheme})
-		if err != nil {
-			return fmt.Errorf("create garden client: %w", err)
-		}
-	}
-
-	if err := extension.AddToManager(ctx, mgr, opts.ReceiverImage, gardenClient); err != nil {
+	if err := extension.AddToManager(ctx, mgr, opts.ReceiverImage); err != nil {
 		return fmt.Errorf("add extension controllers: %w", err)
 	}
 

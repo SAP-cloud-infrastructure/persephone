@@ -26,10 +26,6 @@ import (
 type Actuator struct {
 	Client        client.Client
 	ReceiverImage string
-	// GardenClient is an optional client for the virtual garden cluster.
-	// When set, the actuator syncs the forwarder TLS cert to the project namespace
-	// so the auditing extension can reference it via spec.resources.
-	GardenClient client.Client
 }
 
 // Reconcile ensures the receiver Deployment, Service, TLS secrets, and auditing
@@ -85,10 +81,8 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		return fmt.Errorf("ensure auditing backend: %w", err)
 	}
 
-	if a.GardenClient != nil {
-		if err := a.syncForwarderTLSToGarden(ctx, secrets, cluster.Shoot.Name, cluster.Shoot.Namespace); err != nil {
-			return fmt.Errorf("sync forwarder TLS to garden: %w", err)
-		}
+	if err := a.syncForwarderTLSToSeed(ctx, secrets, cluster.Shoot.Name, namespace); err != nil {
+		return fmt.Errorf("sync forwarder TLS ref secret: %w", err)
 	}
 
 	return secretsManager.Cleanup(ctx)
@@ -143,19 +137,22 @@ func expandPrefix(prefix, shootName string) (string, error) {
 	return buf.String(), nil
 }
 
-// syncForwarderTLSToGarden creates or updates a Secret in the virtual garden project namespace
-// containing the forwarder client TLS material. The secret is named <shootName>.persephone-auditlog-forwarder-tls
-// so the SeedRestriction webhook allows the seed SA to manage it.
-func (a *Actuator) syncForwarderTLSToGarden(ctx context.Context, secrets map[string]*corev1.Secret, shootName, projectNamespace string) error {
+// syncForwarderTLSToSeed creates or updates a ref-prefixed Secret in the seed shoot namespace
+// containing the forwarder client TLS material. The auditing extension reads this secret as
+// ref-<secretReferenceName>, so we create it pre-prefixed here so no virtual garden write is needed.
+func (a *Actuator) syncForwarderTLSToSeed(ctx context.Context, secrets map[string]*corev1.Secret, shootName, namespace string) error {
 	src := secrets[ForwarderClientTLSSecretName]
 	if src == nil {
 		return fmt.Errorf("seed secret %q not found", ForwarderClientTLSSecretName)
 	}
 
+	// The auditing extension reads ref-<secretReferenceName> from the shoot namespace.
+	// We write the secret under that name directly so the gardenlet copy step is not needed.
+	refName := "ref-" + shootName + "." + ForwarderTLSResourceName
 	desired := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      shootName + "." + ForwarderTLSResourceName,
-			Namespace: projectNamespace,
+			Name:      refName,
+			Namespace: namespace,
 		},
 		Data: map[string][]byte{
 			"client.crt": src.Data["tls.crt"],
@@ -165,9 +162,9 @@ func (a *Actuator) syncForwarderTLSToGarden(ctx context.Context, secrets map[str
 	}
 
 	existing := &corev1.Secret{}
-	err := a.GardenClient.Get(ctx, client.ObjectKeyFromObject(desired), existing)
+	err := a.Client.Get(ctx, client.ObjectKeyFromObject(desired), existing)
 	if errors.IsNotFound(err) {
-		return a.GardenClient.Create(ctx, desired)
+		return a.Client.Create(ctx, desired)
 	}
 	if err != nil {
 		return err
@@ -175,5 +172,5 @@ func (a *Actuator) syncForwarderTLSToGarden(ctx context.Context, secrets map[str
 
 	patch := client.MergeFrom(existing.DeepCopy())
 	existing.Data = desired.Data
-	return a.GardenClient.Patch(ctx, existing, patch)
+	return a.Client.Patch(ctx, existing, patch)
 }

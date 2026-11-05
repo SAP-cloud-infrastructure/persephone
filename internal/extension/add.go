@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"time"
 
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
@@ -21,14 +20,10 @@ import (
 const extensionType = "persephone-auditlog"
 
 // AddToManager registers the persephone-auditlog extension actuator with the manager.
-// gardenClient is optional; when non-nil the actuator syncs the forwarder TLS cert to the virtual garden.
-func AddToManager(ctx context.Context, mgr manager.Manager, receiverImage string, gardenClient client.Client) error {
+func AddToManager(ctx context.Context, mgr manager.Manager, receiverImage string) error {
 	actuator := &auditlog.Actuator{
 		Client:        mgr.GetClient(),
 		ReceiverImage: receiverImage,
-	}
-	if gardenClient != nil {
-		actuator.GardenClient = gardenClient
 	}
 
 	if err := extension.Add(mgr, extension.AddArgs{
