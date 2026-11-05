@@ -67,7 +67,7 @@ func run(ctx context.Context, logger logr.Logger, opts *options.Options) error {
 		return err
 	}
 
-	if err := extension.AddToManager(ctx, mgr, opts.ReceiverImage, opts.S3Endpoint); err != nil {
+	if err := extension.AddToManager(ctx, mgr, opts.ReceiverImage, opts.S3EndpointTemplate); err != nil {
 		return fmt.Errorf("add extension controllers: %w", err)
 	}
 

@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"strings"
 
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	extensionssecretsmanager "github.com/gardener/gardener/extensions/pkg/util/secret/manager"
@@ -25,11 +26,9 @@ import (
 // Actuator reconciles Extension{type:"persephone-auditlog"} objects.
 // It implements extension.Actuator from extensions/pkg/controller/extension.
 type Actuator struct {
-	Client        client.Client
-	ReceiverImage string
-	// S3Endpoint is the Ceph RadosGW endpoint URL to pass to receiver pods.
-	// When empty, receivers discover the endpoint from the service catalog.
-	S3Endpoint string
+	Client             client.Client
+	ReceiverImage      string
+	S3EndpointTemplate string
 }
 
 // Reconcile ensures the receiver Deployment, Service, TLS secrets, and audit webhook
@@ -71,7 +70,8 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 	}
 
 	receiverTLSName := secrets[ReceiverTLSSecretName].Name
-	deployment := ReceiverDeployment(namespace, a.ReceiverImage, cfg.ObjectStore.Bucket, prefix, a.S3Endpoint, receiverTLSName, cfg.ObjectStore.ObjectLock)
+	s3Endpoint := strings.ReplaceAll(a.S3EndpointTemplate, "{region}", cluster.Shoot.Spec.Region)
+	deployment := ReceiverDeployment(namespace, a.ReceiverImage, cfg.ObjectStore.Bucket, prefix, s3Endpoint, receiverTLSName, cfg.ObjectStore.ObjectLock)
 	if err := applyObject(ctx, a.Client, deployment); err != nil {
 		return fmt.Errorf("apply receiver Deployment: %w", err)
 	}
