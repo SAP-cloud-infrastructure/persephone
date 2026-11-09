@@ -9,7 +9,6 @@ import (
 	"flag"
 	"os"
 
-	"github.com/gophercloud/gophercloud/v2"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
@@ -56,24 +55,15 @@ func (o *Options) Validate() error {
 	return nil
 }
 
-// AuthOptions builds gophercloud.AuthOptions from environment variables.
-// The receiver gets the cloud-provider secret mounted via the extension actuator,
-// which maps OS_* env vars from the shoot's cloud-provider secret.
-func AuthOptions() (gophercloud.AuthOptions, error) {
-	endpoint := os.Getenv("OS_AUTH_URL")
-	if endpoint == "" {
-		return gophercloud.AuthOptions{}, errors.New("OS_AUTH_URL must be set")
+// S3Credentials reads EC2/S3 credentials from environment variables.
+// The receiver gets these from the cloudprovider secret injected by the extension actuator.
+func S3Credentials() (accessKey, secretKey string, err error) {
+	accessKey = os.Getenv("OS_S3_ACCESS_KEY")
+	secretKey = os.Getenv("OS_S3_SECRET_KEY")
+	if accessKey == "" || secretKey == "" {
+		return "", "", errors.New("OS_S3_ACCESS_KEY and OS_S3_SECRET_KEY must be set")
 	}
-	appID := os.Getenv("OS_APPLICATION_CREDENTIAL_ID")
-	appSecret := os.Getenv("OS_APPLICATION_CREDENTIAL_SECRET")
-	if appID == "" || appSecret == "" {
-		return gophercloud.AuthOptions{}, errors.New("OS_APPLICATION_CREDENTIAL_ID and OS_APPLICATION_CREDENTIAL_SECRET must be set")
-	}
-	return gophercloud.AuthOptions{
-		IdentityEndpoint:            endpoint,
-		ApplicationCredentialID:     appID,
-		ApplicationCredentialSecret: appSecret,
-	}, nil
+	return accessKey, secretKey, nil
 }
 
 // AddFlags adds the flags to the default flag set.

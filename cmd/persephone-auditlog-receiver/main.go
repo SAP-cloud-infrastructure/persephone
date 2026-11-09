@@ -49,9 +49,13 @@ func run(ctx context.Context, logger logr.Logger, opts *options.Options) error {
 		return fmt.Errorf("invalid options: %w", err)
 	}
 
-	authOpts, err := options.AuthOptions()
+	accessKey, secretKey, err := options.S3Credentials()
 	if err != nil {
-		return fmt.Errorf("openstack credentials: %w", err)
+		return fmt.Errorf("s3 credentials: %w", err)
+	}
+
+	if opts.S3Endpoint == "" {
+		return fmt.Errorf("s3-endpoint must be set")
 	}
 
 	var objectLock *receiver.ObjectLockCfg
@@ -63,7 +67,7 @@ func run(ctx context.Context, logger logr.Logger, opts *options.Options) error {
 	}
 
 	writer, err := receiver.NewS3Writer(ctx, logger.WithName("s3"),
-		authOpts, opts.Bucket, opts.Prefix, opts.S3Endpoint, objectLock)
+		accessKey, secretKey, opts.S3Endpoint, opts.Bucket, opts.Prefix, objectLock)
 	if err != nil {
 		return fmt.Errorf("s3 writer: %w", err)
 	}

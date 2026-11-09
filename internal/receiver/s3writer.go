@@ -20,7 +20,6 @@ import (
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
-	"github.com/gophercloud/gophercloud/v2"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 )
 
@@ -41,16 +40,10 @@ type S3Writer struct {
 	ObjectLock *ObjectLockCfg
 }
 
-// NewS3Writer authenticates with OpenStack, fetches EC2 credentials, and
-// returns a ready-to-use S3Writer. s3Endpoint overrides endpoint discovery
-// when non-empty (use "https://rgw.st1.<region>.cloud.sap"). If objectLock
-// is non-nil, Object Lock will be enabled on the bucket.
-func NewS3Writer(ctx context.Context, logger logr.Logger, authOpts gophercloud.AuthOptions, bucket, prefix, s3Endpoint string, objectLock *ObjectLockCfg) (*S3Writer, error) {
-	accessKey, secretKey, endpoint, err := FetchEC2Credentials(ctx, authOpts, s3Endpoint)
-	if err != nil {
-		return nil, fmt.Errorf("fetch ec2 credentials: %w", err)
-	}
-
+// NewS3Writer builds an S3Writer using the provided EC2 credentials and endpoint.
+// s3Endpoint must be non-empty (e.g. "https://rgw.st1.<region>.cloud.sap").
+// If objectLock is non-nil, Object Lock will be enabled on the bucket.
+func NewS3Writer(ctx context.Context, logger logr.Logger, accessKey, secretKey, s3Endpoint, bucket, prefix string, objectLock *ObjectLockCfg) (*S3Writer, error) {
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion("default"),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
@@ -60,7 +53,7 @@ func NewS3Writer(ctx context.Context, logger logr.Logger, authOpts gophercloud.A
 	}
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(endpoint)
+		o.BaseEndpoint = aws.String(s3Endpoint)
 		o.UsePathStyle = true
 	})
 

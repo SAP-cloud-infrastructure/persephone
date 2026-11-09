@@ -69,6 +69,8 @@ func ReceiverDeployment(namespace, image, bucket, prefix, s3Endpoint, tlsSecretN
 								envFromSecret("OS_AUTH_URL", "cloudprovider", "authURL"),
 								envFromSecret("OS_APPLICATION_CREDENTIAL_ID", "cloudprovider", "applicationCredentialID"),
 								envFromSecret("OS_APPLICATION_CREDENTIAL_SECRET", "cloudprovider", "applicationCredentialSecret"),
+								envFromSecret("OS_S3_ACCESS_KEY", "cloudprovider", "ec2AccessKey"),
+								envFromSecret("OS_S3_SECRET_KEY", "cloudprovider", "ec2SecretKey"),
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
