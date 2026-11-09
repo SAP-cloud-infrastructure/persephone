@@ -265,6 +265,12 @@ func (r *Reconciler) delete(ctx context.Context, log logr.Logger, internalSecret
 	}
 	log.Info("OpenStack application credential deleted")
 
+	if err := r.deleteEC2Credential(ctx, log, internalSecret, shoot); err != nil {
+		r.metrics.recordCredentialCleanup(region, "error")
+		return reconcile.Result{}, fmt.Errorf("failed to delete OpenStack EC2 credential: %w", err)
+	}
+	log.Info("OpenStack EC2 credential deleted")
+
 	if secretIsClusterServiceUserOwner, err := r.secretOwnsClusterServiceUser(ctx, internalSecret, shoot); err != nil {
 		r.metrics.recordCredentialCleanup(region, "error")
 		return reconcile.Result{}, fmt.Errorf("failed to check if InternalSecret owns the OpenStack cluster service user: %w", err)
@@ -371,6 +377,31 @@ func (r *Reconciler) deleteClusterServiceUser(ctx context.Context, internalSecre
 	if err := openStackClientSet.DeleteClusterServiceUser(ctx, clusterUserName); err != nil && !gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
 		return fmt.Errorf("failed to delete OpenStack cluster service user %q: %w", clusterUserName, err)
 	}
+
+	return nil
+}
+
+func (r *Reconciler) deleteEC2Credential(ctx context.Context, log logr.Logger, internalSecret *gardenercorev1beta1.InternalSecret, shoot *gardenercorev1beta1.Shoot) error {
+	userClientSet, _, err := r.newOpenStackClusterUserClientSet(ctx, internalSecret, shoot, true)
+	if err != nil {
+		return fmt.Errorf("could not create cluster user clients: %w", err)
+	}
+
+	if userClientSet == nil {
+		log.Info("Cluster user not found, related EC2 credentials are gone as well")
+		return nil
+	}
+
+	accessKey := string(internalSecret.Data[constants.EC2AccessKey])
+	if accessKey == "" {
+		log.Info("No EC2 access key in InternalSecret, nothing to delete")
+		return nil
+	}
+
+	if err := userClientSet.DeleteEC2Credential(ctx, accessKey); err != nil && !gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
+		return fmt.Errorf("failed to delete EC2 credential %q: %w", accessKey, err)
+	}
+	log.Info("EC2 credential deleted", "accessKey", accessKey)
 
 	return nil
 }

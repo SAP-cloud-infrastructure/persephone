@@ -330,22 +330,22 @@ var _ = Describe("Gardener", func() {
 		})
 
 		It("should create secret with correct name format", func() {
-			secret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential)
+			secret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential, "test-access", "test-secret")
 			Expect(secret.Name).To(Equal("1234567890123456--test-shoot--shoot-2025-12-15"))
 		})
 
 		It("should set correct namespace", func() {
-			secret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential)
+			secret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential, "test-access", "test-secret")
 			Expect(secret.Namespace).To(Equal(shoot.Namespace))
 		})
 
 		It("should set expiration annotation", func() {
-			secret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential)
+			secret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential, "test-access", "test-secret")
 			Expect(secret.Annotations).To(HaveKeyWithValue("secret.persephone.sci.cloud.sap/expires-at", "2025-12-31T23:59:59Z"))
 		})
 
 		It("should set all required labels", func() {
-			secret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential)
+			secret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential, "test-access", "test-secret")
 			Expect(secret.Labels).To(HaveKeyWithValue("sci.cloud.sap/domain-id", "domain-id-123"))
 			Expect(secret.Labels).To(HaveKeyWithValue("sci.cloud.sap/domain-name", "domain-name"))
 			Expect(secret.Labels).To(HaveKeyWithValue("sci.cloud.sap/project-id", "1234567890123456"))
@@ -355,16 +355,18 @@ var _ = Describe("Gardener", func() {
 		})
 
 		It("should set immutable to true", func() {
-			secret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential)
+			secret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential, "test-access", "test-secret")
 			Expect(secret.Immutable).To(PointTo(BeTrue()))
 		})
 
 		It("should set correct string data fields", func() {
-			secret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential)
+			secret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential, "test-access", "test-secret")
 			Expect(secret.StringData).To(HaveKeyWithValue("domainName", "domain-name"))
 			Expect(secret.StringData).To(HaveKeyWithValue("tenantName", "test-project"))
 			Expect(secret.StringData).To(HaveKeyWithValue("applicationCredentialID", "app-cred-id-123"))
 			Expect(secret.StringData).To(HaveKeyWithValue("applicationCredentialSecret", "super-secret-value"))
+			Expect(secret.StringData).To(HaveKeyWithValue("ec2AccessKey", "test-access"))
+			Expect(secret.StringData).To(HaveKeyWithValue("ec2SecretKey", "test-secret"))
 		})
 	})
 

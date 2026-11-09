@@ -15,8 +15,10 @@ import (
 	"github.com/gophercloud/gophercloud/v2"
 	"github.com/gophercloud/gophercloud/v2/openstack"
 	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/applicationcredentials"
+	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/ec2credentials"
 	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/roles"
 	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/users"
+	"github.com/gophercloud/gophercloud/v2/pagination"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/sap-cloud-infrastructure/persephone/internal/constants"
@@ -276,4 +278,41 @@ func (c *ClusterUserClientSet) CreateApplicationCredential(ctx context.Context, 
 // DeleteApplicationCredential deletes application credentials with the given ID.
 func (c *ClusterUserClientSet) DeleteApplicationCredential(ctx context.Context, id string) error {
 	return applicationcredentials.Delete(ctx, c.IdentityClient, c.User.ID, id).ExtractErr()
+}
+
+// EnsureEC2Credential ensures exactly one EC2 credential exists for the cluster user scoped to the
+// project, creating one if none exists. It returns the credential's Access and Secret values.
+func (c *ClusterUserClientSet) EnsureEC2Credential(ctx context.Context) (accessKey, secretKey string, err error) {
+	var found *ec2credentials.Credential
+	listErr := ec2credentials.List(c.IdentityClient, c.User.ID).EachPage(ctx, func(_ context.Context, page pagination.Page) (bool, error) {
+		creds, err := ec2credentials.ExtractCredentials(page)
+		if err != nil {
+			return false, err
+		}
+		for i := range creds {
+			if creds[i].TenantID == c.ProjectID {
+				c := creds[i]
+				found = &c
+				return false, nil
+			}
+		}
+		return true, nil
+	})
+	if listErr != nil {
+		return "", "", fmt.Errorf("list ec2 credentials: %w", listErr)
+	}
+	if found != nil {
+		return found.Access, found.Secret, nil
+	}
+
+	cred, err := ec2credentials.Create(ctx, c.IdentityClient, c.User.ID, ec2credentials.CreateOpts{TenantID: c.ProjectID}).Extract()
+	if err != nil {
+		return "", "", fmt.Errorf("create ec2 credential: %w", err)
+	}
+	return cred.Access, cred.Secret, nil
+}
+
+// DeleteEC2Credential deletes the EC2 credential with the given access key ID.
+func (c *ClusterUserClientSet) DeleteEC2Credential(ctx context.Context, accessKey string) error {
+	return ec2credentials.Delete(ctx, c.IdentityClient, c.User.ID, accessKey).ExtractErr()
 }
