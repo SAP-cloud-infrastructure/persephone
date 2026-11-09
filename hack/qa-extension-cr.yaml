@@ -10,9 +10,10 @@ spec:
     extension:
       helm:
         ociRepository:
-          ref: keppel.eu-nl-1.cloud.sap/gardener-dev/persephone-auditlog:0.0.0-6474f64-amd64
+          ref: keppel.eu-nl-1.cloud.sap/gardener-dev/persephone-auditlog:0.0.0-59cb415-amd64
       values:
         image:
           repository: keppel.eu-nl-1.cloud.sap/gardener-dev/persephone-auditlog
-          tag: "6474f64-amd64"
+          tag: "f62977f-amd64"
+        s3EndpointTemplate: "https://rgw.st1.{region}.cloud.sap"
       policy: OnDemand
