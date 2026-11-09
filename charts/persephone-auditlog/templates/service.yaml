@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gardener-extension-persephone-auditlog
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "labels" . | nindent 4 }}
+  ports:
+    - name: https
+      port: 443
+      targetPort: 9443
+      protocol: TCP
+  type: ClusterIP
