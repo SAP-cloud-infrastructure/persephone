@@ -155,6 +155,8 @@ var _ = Describe("ShootAdmission tests", func() {
 				"tenantName":                  []byte("project-name"),
 				"applicationCredentialID":     []byte("fake-new-app-cred-id"),
 				"applicationCredentialSecret": []byte("fake-secret-value"),
+				"ec2AccessKey":                []byte("fake-ec2-access-key"),
+				"ec2SecretKey":                []byte("fake-ec2-secret-key"),
 			}))
 		})
 
