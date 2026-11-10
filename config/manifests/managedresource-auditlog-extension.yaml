@@ -24,7 +24,7 @@ stringData:
         extension:
           helm:
             ociRepository:
-              ref: keppel.global.cloud.sap/gardener-dev/persephone-auditlog:0.1.0
+              ref: persephone-auditlog:0.1.0
           policy: OnDemand
 ---
 apiVersion: resources.gardener.cloud/v1alpha1
