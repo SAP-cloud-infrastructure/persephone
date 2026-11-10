@@ -166,14 +166,14 @@ func GetFakeE2EClient(ctx context.Context, authOptions gophercloud.AuthOptions) 
 	fakeServer.Mux.HandleFunc(fmt.Sprintf("GET /v3/users/%s/credentials/OS-EC2", FakeE2EOptions.UserName), func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		var creds string
+		var b strings.Builder
 		for i, c := range FakeE2EOptions.EC2Credentials {
-			creds += `{"access":"` + c.Access + `","secret":"` + c.Secret + `","tenant_id":"` + c.TenantID + `","user_id":"` + FakeE2EOptions.UserName + `","trust_id":null,"links":{}}`
+			b.WriteString(`{"access":"` + c.Access + `","secret":"` + c.Secret + `","tenant_id":"` + c.TenantID + `","user_id":"` + FakeE2EOptions.UserName + `","trust_id":null,"links":{}}`)
 			if i < len(FakeE2EOptions.EC2Credentials)-1 {
-				creds += ","
+				b.WriteString(",")
 			}
 		}
-		fmt.Fprint(w, `{"credentials":[`+creds+`],"links":{}}`)
+		fmt.Fprint(w, `{"credentials":[`+b.String()+`],"links":{}}`)
 	})
 
 	fakeServer.Mux.HandleFunc(fmt.Sprintf("POST /v3/users/%s/credentials/OS-EC2", FakeE2EOptions.UserName), func(w http.ResponseWriter, r *http.Request) {
