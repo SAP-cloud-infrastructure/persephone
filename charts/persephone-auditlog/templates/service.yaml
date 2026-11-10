@@ -5,6 +5,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "labels" . | nindent 4 }}
+  annotations:
+    networking.resources.gardener.cloud/from-world-to-ports: '[{"protocol":"TCP","port":9443}]'
+    networking.resources.gardener.cloud/pod-label-selector-namespace-alias: extensions
 spec:
   selector:
     {{- include "labels" . | nindent 4 }}
