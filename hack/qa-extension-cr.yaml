@@ -10,7 +10,7 @@ spec:
     extension:
       helm:
         ociRepository:
-          ref: keppel.eu-nl-1.cloud.sap/gardener-dev/persephone-auditlog:0.0.0-59cb415-amd64
+          ref: keppel.eu-nl-1.cloud.sap/gardener-dev/persephone-auditlog:0.0.0-5b9e96e-amd64
       values:
         image:
           repository: keppel.eu-nl-1.cloud.sap/gardener-dev/persephone-auditlog
