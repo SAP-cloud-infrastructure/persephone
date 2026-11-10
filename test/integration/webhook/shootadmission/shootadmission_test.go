@@ -434,6 +434,22 @@ func newFakeIdentityClient() *gophercloud.ServiceClient {
 }`)
 	})
 
+	// Handle POST requests for EC2 credentials - must be registered before the wildcard POST handler
+	fakeServer.Mux.HandleFunc("POST /v3/users/fake-user-id/credentials/OS-EC2", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprint(w, `{
+  "credential": {
+    "access": "fake-ec2-access-key",
+    "secret": "fake-ec2-secret-key",
+    "tenant_id": "project-id",
+    "user_id": "fake-user-id",
+    "trust_id": null,
+    "links": {}
+  }
+}`)
+	})
+
 	// Handle POST requests - create application credential
 	fakeServer.Mux.HandleFunc("POST /v3/users/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
