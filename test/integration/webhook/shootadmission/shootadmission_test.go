@@ -75,6 +75,7 @@ var _ = Describe("ShootAdmission tests", func() {
 				User:           &users.User{ID: "fake-user-id"},
 				IdentityClient: newFakeIdentityClient(),
 				NetworkClient:  newFakeNetworkClient(0),
+				ProjectID:      projectID,
 			}, nil
 		}))
 
@@ -88,6 +89,7 @@ var _ = Describe("ShootAdmission tests", func() {
 				User:           &users.User{ID: "fake-user-id"},
 				IdentityClient: newFakeIdentityClient(),
 				NetworkClient:  newFakeNetworkClient(2),
+				ProjectID:      projectID,
 			}, nil
 		}))
 
@@ -104,6 +106,7 @@ var _ = Describe("ShootAdmission tests", func() {
 					User:           &users.User{ID: "fake-user-id"},
 					IdentityClient: newFakeIdentityClient(),
 					NetworkClient:  newFakeNetworkClient(1),
+					ProjectID:      projectID,
 				}, nil
 			}))
 
@@ -186,6 +189,7 @@ var _ = Describe("ShootAdmission tests", func() {
 					User:           &users.User{ID: "fake-user-id"},
 					IdentityClient: newFakeIdentityClient(),
 					NetworkClient:  newFakeNetworkClient(1),
+					ProjectID:      projectID,
 				}, nil
 			}))
 
@@ -247,6 +251,7 @@ var _ = Describe("ShootAdmission tests", func() {
 					User:           &users.User{ID: "fake-user-id"},
 					IdentityClient: newFakeIdentityClient(),
 					NetworkClient:  newFakeNetworkClient(1),
+					ProjectID:      projectID,
 				}, nil
 			}))
 		})
@@ -295,6 +300,7 @@ var _ = Describe("ShootAdmission tests", func() {
 					User:           &users.User{ID: "fake-user-id"},
 					IdentityClient: newFakeIdentityClient(),
 					NetworkClient:  newFakeNetworkClient(1),
+					ProjectID:      projectID,
 				}, nil
 			}))
 
