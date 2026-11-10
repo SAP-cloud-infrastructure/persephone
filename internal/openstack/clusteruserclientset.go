@@ -18,7 +18,6 @@ import (
 	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/ec2credentials"
 	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/roles"
 	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/users"
-	"github.com/gophercloud/gophercloud/v2/pagination"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/sap-cloud-infrastructure/persephone/internal/constants"
@@ -280,31 +279,11 @@ func (c *ClusterUserClientSet) DeleteApplicationCredential(ctx context.Context, 
 	return applicationcredentials.Delete(ctx, c.IdentityClient, c.User.ID, id).ExtractErr()
 }
 
-// EnsureEC2Credential ensures exactly one EC2 credential exists for the cluster user scoped to the
-// project, creating one if none exists. It returns the credential's Access and Secret values.
+// EnsureEC2Credential creates a new EC2 credential for the cluster user scoped to the project.
+// The OpenStack EC2 credentials List endpoint never returns the secret, so credentials cannot be
+// reused across rotations. A fresh credential is always created; callers are responsible for
+// deleting the old one via DeleteEC2Credential.
 func (c *ClusterUserClientSet) EnsureEC2Credential(ctx context.Context) (accessKey, secretKey string, err error) {
-	var found *ec2credentials.Credential
-	listErr := ec2credentials.List(c.IdentityClient, c.User.ID).EachPage(ctx, func(_ context.Context, page pagination.Page) (bool, error) {
-		creds, err := ec2credentials.ExtractCredentials(page)
-		if err != nil {
-			return false, err
-		}
-		for i := range creds {
-			if creds[i].TenantID == c.ProjectID {
-				c := creds[i]
-				found = &c
-				return false, nil
-			}
-		}
-		return true, nil
-	})
-	if listErr != nil {
-		return "", "", fmt.Errorf("list ec2 credentials: %w", listErr)
-	}
-	if found != nil {
-		return found.Access, found.Secret, nil
-	}
-
 	cred, err := ec2credentials.Create(ctx, c.IdentityClient, c.User.ID, ec2credentials.CreateOpts{TenantID: c.ProjectID}).Extract()
 	if err != nil {
 		return "", "", fmt.Errorf("create ec2 credential: %w", err)
