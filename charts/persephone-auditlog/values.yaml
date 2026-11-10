@@ -1,5 +1,5 @@
 image:
-  repository: keppel.eu-de-1.cloud.sap/ccloud/persephone/persephone-auditlog
+  repository: keppel.global.cloud.sap/ccloud/persephone/persephone-auditlog
   tag: latest
   pullPolicy: IfNotPresent
 

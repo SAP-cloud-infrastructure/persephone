@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	receiverImage     = "keppel.eu-de-1.cloud.sap/ccloud/persephone-auditlog-receiver"
+	receiverImage     = "keppel.global.cloud.sap/ccloud/persephone/persephone-auditlog"
 	receiverPort      = 8443
 	certMountPath     = "/certs"
 	cloudProviderPath = "/cloudprovider"
