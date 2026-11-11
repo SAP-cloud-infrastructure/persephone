@@ -333,6 +333,18 @@ func newOpenStackClientSet() *openstack.ClientSet {
 		w.WriteHeader(http.StatusNotFound)
 	})
 
+	// Handle EC2 credential creation — must come before the catch-all /v3/users/ handler.
+	// gophercloud EC2 Extract() looks for {"credential":{...}}, not {"application_credential":{...}}.
+	fakeServer.Mux.HandleFunc("POST /v3/users/fake-cluster-user-id/credentials/OS-EC2", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprint(w, `{"credential":{"access":"fake-ec2-access-key","secret":"fake-ec2-secret-key","tenant_id":"test-project-id","user_id":"fake-cluster-user-id","trust_id":null,"links":{}}}`)
+	})
+
+	fakeServer.Mux.HandleFunc("DELETE /v3/users/fake-cluster-user-id/credentials/OS-EC2/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+
 	// Catch-all handler for user-related requests (creation, deletion, application credentials)
 	fakeServer.Mux.HandleFunc("/v3/users/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

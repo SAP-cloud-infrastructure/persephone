@@ -22,9 +22,17 @@ type fakeCredential struct {
 	ExpiresAt string
 }
 
+type fakeEC2Credential struct {
+	Access   string
+	Secret   string
+	TenantID string
+}
+
 type fakeE2EOptions struct {
-	Credentials []fakeCredential
-	UserName    string
+	Credentials    []fakeCredential
+	EC2Credentials []fakeEC2Credential
+	UserName       string
+	ProjectID      string
 }
 
 var FakeE2EOptions = fakeE2EOptions{}
@@ -153,6 +161,29 @@ func GetFakeE2EClient(ctx context.Context, authOptions gophercloud.AuthOptions) 
 				"name": "`+FakeE2EOptions.Credentials[0].Name+`"
 			}
 		}`)
+	})
+
+	fakeServer.Mux.HandleFunc(fmt.Sprintf("GET /v3/users/%s/credentials/OS-EC2", FakeE2EOptions.UserName), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		var b strings.Builder
+		for i, c := range FakeE2EOptions.EC2Credentials {
+			b.WriteString(`{"access":"` + c.Access + `","secret":"` + c.Secret + `","tenant_id":"` + c.TenantID + `","user_id":"` + FakeE2EOptions.UserName + `","trust_id":null,"links":{}}`)
+			if i < len(FakeE2EOptions.EC2Credentials)-1 {
+				b.WriteString(",")
+			}
+		}
+		fmt.Fprint(w, `{"credentials":[`+b.String()+`],"links":{}}`)
+	})
+
+	fakeServer.Mux.HandleFunc(fmt.Sprintf("POST /v3/users/%s/credentials/OS-EC2", FakeE2EOptions.UserName), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprint(w, `{"credential":{"access":"fake-access-key","secret":"fake-secret-key","tenant_id":"`+FakeE2EOptions.ProjectID+`","user_id":"`+FakeE2EOptions.UserName+`","trust_id":null,"links":{}}}`)
+	})
+
+	fakeServer.Mux.HandleFunc(fmt.Sprintf("DELETE /v3/users/%s/credentials/OS-EC2/", FakeE2EOptions.UserName), func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
 	})
 
 	client, err := openstack.NewClient(fakeServer.Endpoint())
