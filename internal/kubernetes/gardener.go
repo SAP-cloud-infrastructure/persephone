@@ -179,7 +179,7 @@ func GetApplicationCredentialInternalSecretName(projectID, shootName, applicatio
 // annotated with the expiration timestamp of the provided application credential, and labeled with information about
 // the Shoot and the OpenStack environment.
 func ApplicationCredentialsInternalSecret(shoot *gardenercorev1beta1.Shoot, openStackUserInfo OpenStackUserInfo, applicationCredential *applicationcredentials.ApplicationCredential, ec2AccessKey, ec2SecretKey string) *gardenercorev1beta1.InternalSecret {
-	return &gardenercorev1beta1.InternalSecret{
+	secret := &gardenercorev1beta1.InternalSecret{
 		Name:      GetApplicationCredentialInternalSecretName(openStackUserInfo.ProjectID, shoot.Name, applicationCredential.Name),
 		Namespace: shoot.Namespace,
 		Annotations: map[string]string{
@@ -200,10 +200,15 @@ func ApplicationCredentialsInternalSecret(shoot *gardenercorev1beta1.Shoot, open
 			openstack.TenantName:                  openStackUserInfo.ProjectName,
 			openstack.ApplicationCredentialID:     applicationCredential.ID,
 			openstack.ApplicationCredentialSecret: applicationCredential.Secret,
-			constants.EC2AccessKey:                ec2AccessKey,
-			constants.EC2SecretKey:                ec2SecretKey,
 		},
 	}
+
+	if ec2AccessKey != "" {
+		secret.StringData[constants.EC2AccessKey] = ec2AccessKey
+		secret.StringData[constants.EC2SecretKey] = ec2SecretKey
+	}
+
+	return secret
 }
 
 // CredentialsBindingForSecret creates a new CredentialsBinding for the given Shoot and InternalSecret.

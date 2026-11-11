@@ -25,6 +25,7 @@ func EnsureApplicationCredentialInternalSecretForShoot(
 	userClients *openstacklocal.ClusterUserClientSet,
 	shoot *gardenercorev1beta1.Shoot,
 	openStackUserInfo OpenStackUserInfo,
+	enableEC2Credentials bool,
 ) (
 	*gardenercorev1beta1.InternalSecret,
 	error,
@@ -36,10 +37,13 @@ func EnsureApplicationCredentialInternalSecretForShoot(
 		return nil, fmt.Errorf("failed creating new a application credential: %w", err)
 	}
 
-	log.Info("Ensuring EC2 credential for Shoot")
-	ec2Access, ec2Secret, err := userClients.EnsureEC2Credential(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed ensuring EC2 credential: %w", err)
+	var ec2Access, ec2Secret string
+	if enableEC2Credentials {
+		log.Info("Ensuring EC2 credential for Shoot")
+		ec2Access, ec2Secret, err = userClients.EnsureEC2Credential(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed ensuring EC2 credential: %w", err)
+		}
 	}
 
 	internalSecret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential, ec2Access, ec2Secret)

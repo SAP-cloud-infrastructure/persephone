@@ -62,6 +62,9 @@ type Reconciler struct {
 	Clock clock.Clock
 	// LandscapeName is the name of the landscape.
 	LandscapeName string
+	// EnableEC2Credentials controls whether EC2 credentials are created and deleted alongside application credentials.
+	// Disabled by default until the Gardener OpenStack admission webhook supports the ec2AccessKey/ec2SecretKey fields.
+	EnableEC2Credentials bool
 	// metrics holds the Prometheus metrics.
 	metrics *metrics
 }
@@ -203,7 +206,7 @@ func (r *Reconciler) handleNowAfterRenewTime(ctx context.Context, log logr.Logge
 		return fmt.Errorf("could not create cluster user clients: %w", err)
 	}
 
-	if _, err := kubernetes.EnsureApplicationCredentialInternalSecretForShoot(ctx, log, r.Client, userClientSet, shoot, openStackUserInfo); err != nil {
+	if _, err := kubernetes.EnsureApplicationCredentialInternalSecretForShoot(ctx, log, r.Client, userClientSet, shoot, openStackUserInfo, r.EnableEC2Credentials); err != nil {
 		r.metrics.recordCredentialRotation(region, "error")
 		return fmt.Errorf("failed ensuring a new application credential InternalSecret %q: %w", client.ObjectKeyFromObject(internalSecret), err)
 	}
@@ -265,11 +268,13 @@ func (r *Reconciler) delete(ctx context.Context, log logr.Logger, internalSecret
 	}
 	log.Info("OpenStack application credential deleted")
 
-	if err := r.deleteEC2Credential(ctx, log, internalSecret, shoot); err != nil {
-		r.metrics.recordCredentialCleanup(region, "error")
-		return reconcile.Result{}, fmt.Errorf("failed to delete OpenStack EC2 credential: %w", err)
+	if r.EnableEC2Credentials {
+		if err := r.deleteEC2Credential(ctx, log, internalSecret, shoot); err != nil {
+			r.metrics.recordCredentialCleanup(region, "error")
+			return reconcile.Result{}, fmt.Errorf("failed to delete OpenStack EC2 credential: %w", err)
+		}
+		log.Info("OpenStack EC2 credential deleted")
 	}
-	log.Info("OpenStack EC2 credential deleted")
 
 	if secretIsClusterServiceUserOwner, err := r.secretOwnsClusterServiceUser(ctx, internalSecret, shoot); err != nil {
 		r.metrics.recordCredentialCleanup(region, "error")

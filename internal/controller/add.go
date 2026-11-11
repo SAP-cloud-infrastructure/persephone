@@ -32,8 +32,9 @@ func AddToManager(ctx context.Context, mgr manager.Manager, opts *options.Option
 	}
 
 	if err := (&internalsecret.Reconciler{
-		OpenStackClientSet: openStackClientSet,
-		LandscapeName:      cfg.LandscapeName,
+		OpenStackClientSet:   openStackClientSet,
+		LandscapeName:        cfg.LandscapeName,
+		EnableEC2Credentials: opts.Controllers.InternalSecret.EnableEC2Credentials,
 	}).AddToManager(mgr, opts.Controllers.InternalSecret.MaxConcurrentReconciles); err != nil {
 		return fmt.Errorf("failed adding %s controller: %w", internalsecret.ControllerName, err)
 	}

@@ -296,7 +296,7 @@ func ensureOpenStackCredentialInternalSecretAndBinding(
 		return kubernetes.EnsureCredentialsBindingForInternalSecret(ctx, log, kubernetesClient, shoot, newestInternalSecret)
 	}
 
-	internalSecret, err := kubernetes.EnsureApplicationCredentialInternalSecretForShoot(ctx, log, kubernetesClient, userClients, shoot, openStackUserInfo)
+	internalSecret, err := kubernetes.EnsureApplicationCredentialInternalSecretForShoot(ctx, log, kubernetesClient, userClients, shoot, openStackUserInfo, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed ensuring a new application credential: %w", err)
 	}

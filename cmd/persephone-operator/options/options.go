@@ -67,6 +67,7 @@ type ProjectController struct {
 // InternalSecret contains configuration for the internal-secret controller.
 type InternalSecret struct {
 	MaxConcurrentReconciles int
+	EnableEC2Credentials    bool
 }
 
 // ShootController contains configuration for the shoot controller.
@@ -128,6 +129,8 @@ func (o *Options) AddFlags() {
 		"The maximum number of concurrent reconciliations performed by the project controller.")
 	flag.IntVar(&o.Controllers.InternalSecret.MaxConcurrentReconciles, "internalsecret-controller-max-concurrent-reconciles", 20,
 		"The maximum number of concurrent reconciliations performed by the internal-secret controller.")
+	flag.BoolVar(&o.Controllers.InternalSecret.EnableEC2Credentials, "internalsecret-controller-enable-ec2-credentials", false,
+		"Enable EC2 credential creation and deletion in the internal-secret controller.")
 	flag.IntVar(&o.Controllers.Shoot.MaxConcurrentReconciles, "shoot-controller-max-concurrent-reconciles", 20,
 		"The maximum number of concurrent reconciliations performed by the shoot controller.")
 
