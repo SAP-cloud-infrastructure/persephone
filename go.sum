@@ -541,10 +541,10 @@ github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:
 github.com/imdario/mergo v0.3.5/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
-github.com/itchyny/gojq v0.12.19 h1:ttXA0XCLEMoaLOz5lSeFOZ6u6Q3QxmG46vfgI4O0DEs=
-github.com/itchyny/gojq v0.12.19/go.mod h1:5galtVPDywX8SPSOrqjGxkBeDhSxEW1gSxoy7tn1iZY=
-github.com/itchyny/timefmt-go v0.1.8 h1:1YEo1JvfXeAHKdjelbYr/uCuhkybaHCeTkH8Bo791OI=
-github.com/itchyny/timefmt-go v0.1.8/go.mod h1:5E46Q+zj7vbTgWY8o5YkMeYb4I6GeWLFnetPy5oBrAI=
+github.com/itchyny/gojq v0.12.20 h1:mvxzKjEJDfeLlPc/15q5Kf6wLtEW2T399BL8xmOd9EQ=
+github.com/itchyny/gojq v0.12.20/go.mod h1:cgT47OXUC/BWCBh9V4LuuTRSwFIJNR5loUyqlzbIJbw=
+github.com/itchyny/timefmt-go v0.1.9 h1:J4j1qMqZbg5jycwT6zIKfRgZ9aqqMxqanaI6Rr9Ezs8=
+github.com/itchyny/timefmt-go v0.1.9/go.mod h1:5E46Q+zj7vbTgWY8o5YkMeYb4I6GeWLFnetPy5oBrAI=
 github.com/jonboulle/clockwork v0.5.0 h1:Hyh9A8u51kptdkR+cqRpT1EebBwTn1oK9YfGYbdFz6I=
 github.com/jonboulle/clockwork v0.5.0/go.mod h1:3mZlmanh0g2NDKO5TWZVJAfofYk64M7XN3SzBPjZF60=
 github.com/joshdk/go-junit v1.0.0 h1:S86cUKIdwBHWwA6xCmFlf3RTLfVXYQfvanM5Uh+K6GE=
@@ -739,8 +739,8 @@ github.com/prometheus/procfs v0.22.0 h1:6q9+/JL9IKAPbCmBrv9n5O5Ty3NKnciV5X7YGw0o
 github.com/prometheus/procfs v0.22.0/go.mod h1:CvmFr/GVhIjIvWJZW3tgkODBQMRIf0EyWMQLHCHab58=
 github.com/prometheus/sigv4 v0.5.0 h1:WWZDeiCPFTBJIniIa+pv3edYtPHtZxDAa5w5Tmp+UuQ=
 github.com/prometheus/sigv4 v0.5.0/go.mod h1:oLsQ72mP5bVxsIrFgv/gT2jY1devyRLZhAvrsWG4SEk=
-github.com/rabbitmq/amqp091-go v1.15.0 h1:LEQL4/yp48/Wigt6A6XOu18RQRo8ZHtB5I/KZJn+gkw=
-github.com/rabbitmq/amqp091-go v1.15.0/go.mod h1:Hy4jKW5kQART1u+JkDTF9YYOQUHXqMuhrgxOEeS7G4o=
+github.com/rabbitmq/amqp091-go v1.16.0 h1:1O8oQqnj9hLACoo6CVMgn57z2pLWXvgemhh4GsquV+Y=
+github.com/rabbitmq/amqp091-go v1.16.0/go.mod h1:Hy4jKW5kQART1u+JkDTF9YYOQUHXqMuhrgxOEeS7G4o=
 github.com/robfig/cron v1.2.0 h1:ZjScXvvxeQ63Dbyxy76Fj3AT3Ut0aKsyd2/tl3DTMuQ=
 github.com/robfig/cron v1.2.0/go.mod h1:JGuDeoQd7Z6yL4zQhZ3OPEVHB7fL6Ka6skscFHfmt2k=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
@@ -757,8 +757,8 @@ github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 h1:1EYB5IzjZawrrnELUi78f9fPu57Hu
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.3/go.mod h1:JXeL+ps8p7/KNMjDQk3TCwPpBy0wYklyWTfbkIzdIFU=
 github.com/sapcc/go-api-declarations v1.25.1 h1:Lrbf8TZY/ARg0J9IrlrObqnXjrzSzmYKQd/L/a71Lsg=
 github.com/sapcc/go-api-declarations v1.25.1/go.mod h1:bJkK8wphzlmUmN5lxBv8BbfxUXMOkW+UiC10xBHXsFs=
-github.com/sapcc/go-bits v0.0.0-20261009090210-c011033c8559 h1:7BRF2kmSSen/+ffHcb5b49m+K4gA7/bFErGVrf2ssrM=
-github.com/sapcc/go-bits v0.0.0-20261009090210-c011033c8559/go.mod h1:GDsLUgS36+Q2q7rMlYZQjRnBF3WsPYpipPa3i9iO65A=
+github.com/sapcc/go-bits v0.0.0-20261105181628-13886743d3a7 h1:wMaeqAzroobJLeToye7ksGihdX8onvg0tEvU940QEJA=
+github.com/sapcc/go-bits v0.0.0-20261105181628-13886743d3a7/go.mod h1:2Q+U9Heq6HLNRzSFz9ArClQknQSmK2qs5epOWZraxhc=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 h1:nn5Wsu0esKSJiIVhscUtVbo7ada43DJhG55ua/hjS5I=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/shopspring/decimal v1.3.1/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
