@@ -15,7 +15,6 @@ import (
 	"github.com/gophercloud/gophercloud/v2"
 	"github.com/gophercloud/gophercloud/v2/openstack"
 	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/applicationcredentials"
-	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/ec2credentials"
 	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/roles"
 	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/users"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -277,21 +276,4 @@ func (c *ClusterUserClientSet) CreateApplicationCredential(ctx context.Context, 
 // DeleteApplicationCredential deletes application credentials with the given ID.
 func (c *ClusterUserClientSet) DeleteApplicationCredential(ctx context.Context, id string) error {
 	return applicationcredentials.Delete(ctx, c.IdentityClient, c.User.ID, id).ExtractErr()
-}
-
-// EnsureEC2Credential creates a new EC2 credential for the cluster user scoped to the project.
-// The OpenStack EC2 credentials List endpoint never returns the secret, so credentials cannot be
-// reused across rotations. A fresh credential is always created; callers are responsible for
-// deleting the old one via DeleteEC2Credential.
-func (c *ClusterUserClientSet) EnsureEC2Credential(ctx context.Context) (accessKey, secretKey string, err error) {
-	cred, err := ec2credentials.Create(ctx, c.IdentityClient, c.User.ID, ec2credentials.CreateOpts{TenantID: c.ProjectID}).Extract()
-	if err != nil {
-		return "", "", fmt.Errorf("create ec2 credential: %w", err)
-	}
-	return cred.Access, cred.Secret, nil
-}
-
-// DeleteEC2Credential deletes the EC2 credential with the given access key ID.
-func (c *ClusterUserClientSet) DeleteEC2Credential(ctx context.Context, accessKey string) error {
-	return ec2credentials.Delete(ctx, c.IdentityClient, c.User.ID, accessKey).ExtractErr()
 }

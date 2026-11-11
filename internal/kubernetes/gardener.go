@@ -178,7 +178,7 @@ func GetApplicationCredentialInternalSecretName(projectID, shootName, applicatio
 // ApplicationCredentialsInternalSecret returns a new immutable Secret for application credentials for a Shoot. It is
 // annotated with the expiration timestamp of the provided application credential, and labeled with information about
 // the Shoot and the OpenStack environment.
-func ApplicationCredentialsInternalSecret(shoot *gardenercorev1beta1.Shoot, openStackUserInfo OpenStackUserInfo, applicationCredential *applicationcredentials.ApplicationCredential, ec2AccessKey, ec2SecretKey string) *gardenercorev1beta1.InternalSecret {
+func ApplicationCredentialsInternalSecret(shoot *gardenercorev1beta1.Shoot, openStackUserInfo OpenStackUserInfo, applicationCredential *applicationcredentials.ApplicationCredential) *gardenercorev1beta1.InternalSecret {
 	return &gardenercorev1beta1.InternalSecret{
 		Name:      GetApplicationCredentialInternalSecretName(openStackUserInfo.ProjectID, shoot.Name, applicationCredential.Name),
 		Namespace: shoot.Namespace,
@@ -200,8 +200,6 @@ func ApplicationCredentialsInternalSecret(shoot *gardenercorev1beta1.Shoot, open
 			openstack.TenantName:                  openStackUserInfo.ProjectName,
 			openstack.ApplicationCredentialID:     applicationCredential.ID,
 			openstack.ApplicationCredentialSecret: applicationCredential.Secret,
-			constants.EC2AccessKey:                ec2AccessKey,
-			constants.EC2SecretKey:                ec2SecretKey,
 		},
 	}
 }

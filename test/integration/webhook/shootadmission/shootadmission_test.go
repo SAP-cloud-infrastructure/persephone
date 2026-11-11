@@ -75,7 +75,6 @@ var _ = Describe("ShootAdmission tests", func() {
 				User:           &users.User{ID: "fake-user-id"},
 				IdentityClient: newFakeIdentityClient(),
 				NetworkClient:  newFakeNetworkClient(0),
-				ProjectID:      projectID,
 			}, nil
 		}))
 
@@ -89,7 +88,6 @@ var _ = Describe("ShootAdmission tests", func() {
 				User:           &users.User{ID: "fake-user-id"},
 				IdentityClient: newFakeIdentityClient(),
 				NetworkClient:  newFakeNetworkClient(2),
-				ProjectID:      projectID,
 			}, nil
 		}))
 
@@ -106,7 +104,6 @@ var _ = Describe("ShootAdmission tests", func() {
 					User:           &users.User{ID: "fake-user-id"},
 					IdentityClient: newFakeIdentityClient(),
 					NetworkClient:  newFakeNetworkClient(1),
-					ProjectID:      projectID,
 				}, nil
 			}))
 
@@ -155,8 +152,6 @@ var _ = Describe("ShootAdmission tests", func() {
 				"tenantName":                  []byte("project-name"),
 				"applicationCredentialID":     []byte("fake-new-app-cred-id"),
 				"applicationCredentialSecret": []byte("fake-secret-value"),
-				"ec2AccessKey":                []byte("fake-ec2-access-key"),
-				"ec2SecretKey":                []byte("fake-ec2-secret-key"),
 			}))
 		})
 
@@ -191,7 +186,6 @@ var _ = Describe("ShootAdmission tests", func() {
 					User:           &users.User{ID: "fake-user-id"},
 					IdentityClient: newFakeIdentityClient(),
 					NetworkClient:  newFakeNetworkClient(1),
-					ProjectID:      projectID,
 				}, nil
 			}))
 
@@ -253,7 +247,6 @@ var _ = Describe("ShootAdmission tests", func() {
 					User:           &users.User{ID: "fake-user-id"},
 					IdentityClient: newFakeIdentityClient(),
 					NetworkClient:  newFakeNetworkClient(1),
-					ProjectID:      projectID,
 				}, nil
 			}))
 		})
@@ -302,7 +295,6 @@ var _ = Describe("ShootAdmission tests", func() {
 					User:           &users.User{ID: "fake-user-id"},
 					IdentityClient: newFakeIdentityClient(),
 					NetworkClient:  newFakeNetworkClient(1),
-					ProjectID:      projectID,
 				}, nil
 			}))
 
@@ -439,22 +431,6 @@ func newFakeIdentityClient() *gophercloud.ServiceClient {
       }
     }
   ]
-}`)
-	})
-
-	// Handle POST requests for EC2 credentials - must be registered before the wildcard POST handler
-	fakeServer.Mux.HandleFunc("POST /v3/users/fake-user-id/credentials/OS-EC2", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		fmt.Fprint(w, `{
-  "credential": {
-    "access": "fake-ec2-access-key",
-    "secret": "fake-ec2-secret-key",
-    "tenant_id": "project-id",
-    "user_id": "fake-user-id",
-    "trust_id": null,
-    "links": {}
-  }
 }`)
 	})
 
