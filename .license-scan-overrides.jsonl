@@ -5,6 +5,7 @@
 {"name": "github.com/logrusorgru/aurora", "licenceType": "Unlicense"}
 {"name": "github.com/mattn/go-localereader", "licenceType": "MIT"}
 {"name": "github.com/miekg/dns", "licenceType": "BSD-3-Clause"}
+{"name": "github.com/pascaldekloe/goe", "licenceType": "CC0-1.0"}
 {"name": "github.com/pashagolub/pgxmock/v4", "licenceType": "BSD-3-Clause"}
 {"name": "github.com/pashagolub/pgxmock/v5", "licenceType": "BSD-3-Clause"}
 {"name": "github.com/spdx/tools-golang", "licenceTextOverrideFile": "vendor/github.com/spdx/tools-golang/LICENSE.code"}
