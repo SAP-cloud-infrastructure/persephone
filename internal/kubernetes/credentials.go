@@ -36,13 +36,7 @@ func EnsureApplicationCredentialInternalSecretForShoot(
 		return nil, fmt.Errorf("failed creating new a application credential: %w", err)
 	}
 
-	log.Info("Ensuring EC2 credential for Shoot")
-	ec2Access, ec2Secret, err := userClients.EnsureEC2Credential(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed ensuring EC2 credential: %w", err)
-	}
-
-	internalSecret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential, ec2Access, ec2Secret)
+	internalSecret := ApplicationCredentialsInternalSecret(shoot, openStackUserInfo, applicationCredential)
 
 	log.Info("Ensuring new Secret for application credential", "internalSecret", client.ObjectKeyFromObject(internalSecret), "applicationCredentialName", applicationCredential.Name)
 	if err := kubernetesClient.Create(ctx, internalSecret); err != nil {

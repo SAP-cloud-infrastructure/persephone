@@ -124,35 +124,4 @@ var _ = Describe("ClusterUserClientSet", func() {
 			})
 		})
 	})
-
-	Describe("#EnsureEC2Credential", func() {
-		BeforeEach(func() {
-			FakeE2EOptions = fakeE2EOptions{
-				UserName:  "user-id",
-				ProjectID: "test-project-id",
-			}
-			clusterUserClientSet = &ClusterUserClientSet{
-				IdentityClient: GetTestIdentityClient(GinkgoT()),
-				User:           &users.User{ID: FakeE2EOptions.UserName, Name: FakeE2EOptions.UserName},
-				ProjectID:      FakeE2EOptions.ProjectID,
-			}
-		})
-
-		It("always creates a fresh credential and returns access and secret", func() {
-			accessKey, secretKey, err := clusterUserClientSet.EnsureEC2Credential(ctx)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(accessKey).To(Equal("fake-access-key"))
-			Expect(secretKey).To(Equal("fake-secret-key"))
-		})
-
-		It("creates a new credential even when existing ones are present", func() {
-			FakeE2EOptions.EC2Credentials = []fakeEC2Credential{
-				{Access: "old-access", Secret: "", TenantID: FakeE2EOptions.ProjectID},
-			}
-			accessKey, secretKey, err := clusterUserClientSet.EnsureEC2Credential(ctx)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(accessKey).To(Equal("fake-access-key"))
-			Expect(secretKey).To(Equal("fake-secret-key"))
-		})
-	})
 })
