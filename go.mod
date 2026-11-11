@@ -48,7 +48,7 @@ require (
 	github.com/VictoriaMetrics/metricsql v0.87.3 // indirect
 	github.com/VictoriaMetrics/operator/api v0.74.1 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
-	github.com/andybalholm/brotli v1.2.6 // indirect
+	github.com/andybalholm/brotli v1.2.7 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.47.5 // indirect
