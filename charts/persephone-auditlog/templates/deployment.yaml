@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+    high-availability-config.resources.gardener.cloud/type: server
+spec:
+  revisionHistoryLimit: 2
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "labels" . | nindent 8 }}
+        networking.gardener.cloud/to-runtime-apiserver: allowed
+        networking.gardener.cloud/to-dns: allowed
+    spec:
+      serviceAccountName: {{ include "name" . }}
+      automountServiceAccountToken: true
+      containers:
+        - name: extension
+          image: {{ include "image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /usr/bin/persephone-extension
+            - --health-bind-address=:{{ .Values.healthPort }}
+            - --metrics-bind-address=:{{ .Values.metricsPort }}
+            - --receiver-image={{ .Values.image.repository }}:{{ .Values.image.tag }}
+          env:
+            - name: LEADER_ELECTION_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.healthPort }}
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.healthPort }}
+            initialDelaySeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          {{- if .Values.resources }}
+          resources:
+            {{ toYaml .Values.resources | nindent 12 }}
+          {{- end }}

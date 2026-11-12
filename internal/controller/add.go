@@ -12,6 +12,7 @@ import (
 
 	"github.com/sap-cloud-infrastructure/persephone/cmd/persephone-operator/options"
 	"github.com/sap-cloud-infrastructure/persephone/internal/config"
+	"github.com/sap-cloud-infrastructure/persephone/internal/controller/auditlog"
 	"github.com/sap-cloud-infrastructure/persephone/internal/controller/internalsecret"
 	"github.com/sap-cloud-infrastructure/persephone/internal/controller/project"
 	"github.com/sap-cloud-infrastructure/persephone/internal/controller/shoot"
@@ -43,6 +44,14 @@ func AddToManager(ctx context.Context, mgr manager.Manager, opts *options.Option
 		LandscapeName:      cfg.LandscapeName,
 	}).AddToManager(mgr, opts.Controllers.Shoot.MaxConcurrentReconciles); err != nil {
 		return fmt.Errorf("failed adding %s controller: %w", shoot.ControllerName, err)
+	}
+
+	if opts.Controllers.AuditlogChartRef != "" {
+		if err := auditlog.AddToManager(ctx, mgr, auditlog.Options{
+			AuditlogChartRef: opts.Controllers.AuditlogChartRef,
+		}); err != nil {
+			return fmt.Errorf("failed adding %s controller: %w", auditlog.ControllerName, err)
+		}
 	}
 
 	return nil
