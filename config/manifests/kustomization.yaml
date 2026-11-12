@@ -25,6 +25,9 @@ resources:
   - networkpolicy-auditlog-forwarder-egress.yaml
   - managedresource-operator.yaml
   - managedresource-scikube-getting-started-markdown.yaml
+  - managedresource-shoot-purpose-config-qa.yaml
+  - managedresource-shoot-purpose-config-canary.yaml
+  - managedresource-shoot-purpose-config-prod.yaml
   - managedresource-webhook.yaml
   - secrets-webhook.yaml
   - secrets-operator.yaml
