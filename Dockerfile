@@ -11,7 +11,7 @@ COPY . /src
 ARG BININFO_BUILD_DATE BININFO_COMMIT_HASH BININFO_VERSION # provided to 'make install'
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-  make -C /src install PREFIX=/pkg GOTOOLCHAIN=local
+  make -C /src install PREFIX=/pkg GOTOOLCHAIN=local GO_BUILDFLAGS='-tags musl'
 
 ################################################################################
 
@@ -46,7 +46,7 @@ RUN chown -R 4200:4200 /src/ /go/
 USER 4200:4200
 RUN cd /src \
   && { if test -d .git; then git config --global --add safe.directory /src; fi; } \
-  && make build/cover.out
+  && make build/cover.out GO_BUILDFLAGS='-tags musl'
 
 ################################################################################
 
