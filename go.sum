@@ -757,8 +757,8 @@ github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 h1:1EYB5IzjZawrrnELUi78f9fPu57Hu
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.3/go.mod h1:JXeL+ps8p7/KNMjDQk3TCwPpBy0wYklyWTfbkIzdIFU=
 github.com/sapcc/go-api-declarations v1.25.1 h1:Lrbf8TZY/ARg0J9IrlrObqnXjrzSzmYKQd/L/a71Lsg=
 github.com/sapcc/go-api-declarations v1.25.1/go.mod h1:bJkK8wphzlmUmN5lxBv8BbfxUXMOkW+UiC10xBHXsFs=
-github.com/sapcc/go-bits v0.0.0-20261105181628-13886743d3a7 h1:wMaeqAzroobJLeToye7ksGihdX8onvg0tEvU940QEJA=
-github.com/sapcc/go-bits v0.0.0-20261105181628-13886743d3a7/go.mod h1:2Q+U9Heq6HLNRzSFz9ArClQknQSmK2qs5epOWZraxhc=
+github.com/sapcc/go-bits v0.0.0-20261112131659-2726a2c437f4 h1:mggGIR4U1lrQcdVIoycMrURTjV7P82WdY28VdZZ7eO8=
+github.com/sapcc/go-bits v0.0.0-20261112131659-2726a2c437f4/go.mod h1:5TyYcpATrqAaEaK6XNvvm84T76PgaTz4XFokRipne8w=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 h1:nn5Wsu0esKSJiIVhscUtVbo7ada43DJhG55ua/hjS5I=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/shopspring/decimal v1.3.1/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
