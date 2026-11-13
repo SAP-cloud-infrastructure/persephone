@@ -7,7 +7,7 @@ require (
 	github.com/adrg/xdg v0.5.3
 	github.com/gardener/gardener v1.155.0 // this points to v1.135.2 which is not yet released
 	github.com/gardener/gardener-extension-provider-openstack v1.59.1
-	github.com/gardener/gardener/pkg/apis v1.155.0
+	github.com/gardener/gardener/pkg/apis v1.155.1
 	github.com/go-logr/logr v1.4.4
 	github.com/gophercloud/gophercloud/v2 v2.15.0
 	github.com/gorilla/mux v1.8.1
