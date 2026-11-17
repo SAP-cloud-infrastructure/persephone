@@ -15,6 +15,9 @@ const (
 	// (if 24h are left until expiration, renewal should be triggered).
 	ApplicationCredentialsRenewTime = 24 * time.Hour
 
+	// EC2CredentialsValidity is the rotation period for EC2 credentials (no built-in expiry, we rotate them).
+	EC2CredentialsValidity = 24 * 60 * time.Hour
+
 	// AnnotationKeyExpiresAt is a constant for an annotation key on a Secret whose value contains a timestamp at which
 	// the credentials in the Secret's data expire.
 	AnnotationKeyExpiresAt = "secret.persephone.sci.cloud.sap/expires-at"
@@ -37,6 +40,19 @@ const (
 	// LabelKeyShootName is a constant for a label key whose value contains the name of a Shoot (usually, this label is
 	// part of InternalSecrets containing application credentials).
 	LabelKeyShootName = "persephone.sci.cloud.sap/shoot-name"
+
+	// LabelKeyEC2Credentials is a label key present on InternalSecrets that hold EC2 credentials.
+	// InternalSecrets with this label are never referenced by a CredentialsBinding, so the OpenStack
+	// admission webhook never validates them.
+	LabelKeyEC2Credentials = "persephone.sci.cloud.sap/ec2-credentials" //nolint:gosec
+
+	// EC2AccessKey is the key in an InternalSecret's data that holds the OpenStack EC2 credential access key.
+	EC2AccessKey = "ec2AccessKey"
+	// EC2SecretKey is the key in an InternalSecret's data that holds the OpenStack EC2 credential secret key.
+	EC2SecretKey = "ec2SecretKey"
+
+	// AuditLogExtensionType is the Gardener extension type for the persephone-auditlog extension.
+	AuditLogExtensionType = "persephone-auditlog"
 
 	// ResourceQuotaName is the name of the ResourceQuota object managed by Persephone in each project namespace.
 	ResourceQuotaName = "shoot-clusters-quota"

@@ -12,6 +12,8 @@ import (
 
 	"github.com/sap-cloud-infrastructure/persephone/cmd/persephone-operator/options"
 	"github.com/sap-cloud-infrastructure/persephone/internal/config"
+	"github.com/sap-cloud-infrastructure/persephone/internal/controller/ec2internalsecret"
+	"github.com/sap-cloud-infrastructure/persephone/internal/controller/extensionrbac"
 	"github.com/sap-cloud-infrastructure/persephone/internal/controller/internalsecret"
 	"github.com/sap-cloud-infrastructure/persephone/internal/controller/project"
 	"github.com/sap-cloud-infrastructure/persephone/internal/controller/shoot"
@@ -43,6 +45,17 @@ func AddToManager(ctx context.Context, mgr manager.Manager, opts *options.Option
 		LandscapeName:      cfg.LandscapeName,
 	}).AddToManager(mgr, opts.Controllers.Shoot.MaxConcurrentReconciles); err != nil {
 		return fmt.Errorf("failed adding %s controller: %w", shoot.ControllerName, err)
+	}
+
+	if err := (&ec2internalsecret.Reconciler{
+		OpenStackClientSet: openStackClientSet,
+		LandscapeName:      cfg.LandscapeName,
+	}).AddToManager(mgr, opts.Controllers.EC2InternalSecret.MaxConcurrentReconciles); err != nil {
+		return fmt.Errorf("failed adding %s controller: %w", ec2internalsecret.ControllerName, err)
+	}
+
+	if err := (&extensionrbac.Reconciler{}).AddToManager(mgr, opts.Controllers.ExtensionRBAC.MaxConcurrentReconciles); err != nil {
+		return fmt.Errorf("failed adding %s controller: %w", extensionrbac.ControllerName, err)
 	}
 
 	return nil
