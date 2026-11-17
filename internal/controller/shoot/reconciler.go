@@ -69,8 +69,14 @@ func (r *Reconciler) reconcile(ctx context.Context, log logr.Logger, shoot *gard
 		}
 	}
 
+	if err := r.ensureEC2InternalSecret(ctx, log, shoot); err != nil {
+		return reconcile.Result{}, fmt.Errorf("failed to ensure EC2 InternalSecret for Shoot %q: %w", client.ObjectKeyFromObject(shoot), err)
+	}
+
 	newestInternalSecret, err := kubernetesutils.NewestObject(ctx, r.Client, &gardenercorev1beta1.InternalSecretList{},
-		func(obj client.Object) bool { return obj.GetDeletionTimestamp() == nil },
+		func(obj client.Object) bool {
+			return obj.GetLabels()[constants.LabelKeyEC2Credentials] != "true" && obj.GetDeletionTimestamp() == nil
+		},
 		client.InNamespace(shoot.Namespace), client.MatchingLabels{constants.LabelKeyShootName: shoot.Name})
 	if err != nil {
 		return reconcile.Result{}, fmt.Errorf("failed to list InternalSecrets for Shoot %q: %w", client.ObjectKeyFromObject(shoot), err)
@@ -178,6 +184,58 @@ func (r *Reconciler) ensureOpenStackInternalSecret(ctx context.Context, log logr
 	return nil
 }
 
+func (r *Reconciler) ensureEC2InternalSecret(ctx context.Context, log logr.Logger, shoot *gardenercorev1beta1.Shoot) error {
+	if !hasAuditLogExtension(shoot) {
+		return nil
+	}
+
+	existing, err := kubernetesutils.NewestObject(ctx, r.Client, &gardenercorev1beta1.InternalSecretList{},
+		func(obj client.Object) bool { return obj.GetDeletionTimestamp() == nil },
+		client.InNamespace(shoot.Namespace),
+		client.MatchingLabels{constants.LabelKeyShootName: shoot.Name, constants.LabelKeyEC2Credentials: "true"},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to list EC2 InternalSecrets: %w", err)
+	}
+	if existing != nil {
+		return nil
+	}
+
+	namespace := &corev1.Namespace{}
+	if err := r.Client.Get(ctx, client.ObjectKey{Name: shoot.Namespace}, namespace); err != nil {
+		return fmt.Errorf("failed to get namespace %q: %w", shoot.Namespace, err)
+	}
+
+	openStackUserInfo, err := kuberneteslocal.OpenStackUserInfoFromLabels(namespace.Labels)
+	if err != nil {
+		return fmt.Errorf("failed to get OpenStack user info from namespace labels: %w", err)
+	}
+
+	openStackClientSet, ok := r.OpenStackClientSet[openStackUserInfo.Region]
+	if !ok {
+		return fmt.Errorf("region %q not supported", openStackUserInfo.Region)
+	}
+
+	clusterUserName := kuberneteslocal.GetClusterUserName(r.LandscapeName, shoot.Name, openStackUserInfo.ProjectID)
+	clusterUserClientSet, err := openstacklocal.NewClusterUserClientSet(ctx, openStackClientSet, clusterUserName, openStackUserInfo.ProjectID)
+	if err != nil {
+		return fmt.Errorf("failed to create cluster user client set: %w", err)
+	}
+
+	accessKey, secretKey, err := clusterUserClientSet.EnsureEC2Credential(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create EC2 credential: %w", err)
+	}
+
+	internalSecret := kuberneteslocal.EC2CredentialsInternalSecret(shoot, openStackUserInfo, accessKey, secretKey)
+	log.Info("Creating EC2 InternalSecret for Shoot", "internalSecret", client.ObjectKeyFromObject(internalSecret))
+	if err := r.Client.Create(ctx, internalSecret); err != nil {
+		return fmt.Errorf("failed to create EC2 InternalSecret: %w", err)
+	}
+
+	return nil
+}
+
 func (r *Reconciler) delete(ctx context.Context, log logr.Logger, shoot *gardenercorev1beta1.Shoot) (reconcile.Result, error) {
 	if shoot.Status.LastOperation == nil ||
 		shoot.Status.LastOperation.Type != gardenercorev1beta1.LastOperationTypeDelete ||
@@ -193,4 +251,13 @@ func (r *Reconciler) delete(ctx context.Context, log logr.Logger, shoot *gardene
 
 	log.Info("Deletion triggered, removing finalizer from Shoot")
 	return reconcile.Result{}, controllerutils.RemoveFinalizers(ctx, r.Client, shoot, FinalizerName)
+}
+
+func hasAuditLogExtension(shoot *gardenercorev1beta1.Shoot) bool {
+	for _, ext := range shoot.Spec.Extensions {
+		if ext.Type == constants.AuditLogExtensionType && !ptr.Deref(ext.Disabled, false) {
+			return true
+		}
+	}
+	return false
 }
