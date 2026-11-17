@@ -13,7 +13,6 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/clock"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -194,10 +193,11 @@ var _ = Describe("hasAuditLogExtension()", func() {
 	})
 
 	It("returns false when persephone-auditlog extension is disabled", func() {
+		disabled := true
 		shoot := &gardenercorev1beta1.Shoot{
 			Spec: gardenercorev1beta1.ShootSpec{
 				Extensions: []gardenercorev1beta1.Extension{
-					{Type: constants.AuditLogExtensionType, Disabled: ptr.To(true)},
+					{Type: constants.AuditLogExtensionType, Disabled: &disabled},
 				},
 			},
 		}
