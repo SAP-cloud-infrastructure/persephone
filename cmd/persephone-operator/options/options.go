@@ -57,6 +57,10 @@ type ControllerOptions struct {
 	InternalSecret InternalSecret
 	// Shoot contains configuration for the shoot controller.
 	Shoot ShootController
+	// EC2InternalSecret contains configuration for the EC2 internal-secret controller.
+	EC2InternalSecret EC2InternalSecret
+	// ExtensionRBAC contains configuration for the extension RBAC controller.
+	ExtensionRBAC ExtensionRBAC
 }
 
 // ProjectController contains configuration for the project controller.
@@ -71,6 +75,16 @@ type InternalSecret struct {
 
 // ShootController contains configuration for the shoot controller.
 type ShootController struct {
+	MaxConcurrentReconciles int
+}
+
+// EC2InternalSecret contains configuration for the EC2 internal-secret controller.
+type EC2InternalSecret struct {
+	MaxConcurrentReconciles int
+}
+
+// ExtensionRBAC contains configuration for the extension RBAC controller.
+type ExtensionRBAC struct {
 	MaxConcurrentReconciles int
 }
 
@@ -130,6 +144,10 @@ func (o *Options) AddFlags() {
 		"The maximum number of concurrent reconciliations performed by the internal-secret controller.")
 	flag.IntVar(&o.Controllers.Shoot.MaxConcurrentReconciles, "shoot-controller-max-concurrent-reconciles", 20,
 		"The maximum number of concurrent reconciliations performed by the shoot controller.")
+	flag.IntVar(&o.Controllers.EC2InternalSecret.MaxConcurrentReconciles, "ec2-internalsecret-controller-max-concurrent-reconciles", 20,
+		"The maximum number of concurrent reconciliations performed by the EC2 internal-secret controller.")
+	flag.IntVar(&o.Controllers.ExtensionRBAC.MaxConcurrentReconciles, "extension-rbac-controller-max-concurrent-reconciles", 5,
+		"The maximum number of concurrent reconciliations performed by the extension RBAC controller.")
 
 	o.Zap = zap.Options{Development: false}
 	o.Zap.BindFlags(flag.CommandLine)
