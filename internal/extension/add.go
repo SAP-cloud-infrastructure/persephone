@@ -49,9 +49,9 @@ func AddToManager(ctx context.Context, mgr manager.Manager, gardenClient client.
 
 	webhookOpts := webhookcmd.NewAddToManagerOptions(
 		extensionType,
-		"",   // no shoot webhook managed resource — only seed webhook
-		nil,  // no shoot namespace selector
-		nil,  // no general options
+		"",  // no shoot webhook managed resource — only seed webhook
+		nil, // no shoot namespace selector
+		nil, // no general options
 		&webhookcmd.ServerOptions{
 			Namespace: os.Getenv("WEBHOOK_CONFIG_NAMESPACE"),
 		},

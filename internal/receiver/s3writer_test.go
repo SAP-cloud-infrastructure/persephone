@@ -51,8 +51,8 @@ func newTestS3Writer(srv *httptest.Server, bucket, prefix string, objectLock *re
 
 var _ = Describe("S3Writer", func() {
 	var (
-		srv      *httptest.Server
-		putPaths []string
+		srv       *httptest.Server
+		putPaths  []string
 		putBodies [][]byte
 	)
 
@@ -62,7 +62,8 @@ var _ = Describe("S3Writer", func() {
 		srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.Method {
 			case http.MethodPut:
-				body, _ := io.ReadAll(r.Body)
+				body, err := io.ReadAll(r.Body)
+				Expect(err).NotTo(HaveOccurred())
 				putPaths = append(putPaths, r.URL.Path)
 				putBodies = append(putBodies, body)
 				w.WriteHeader(http.StatusOK)

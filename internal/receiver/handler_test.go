@@ -13,9 +13,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/go-logr/logr"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 
 	"github.com/sap-cloud-infrastructure/persephone/internal/receiver"
@@ -43,7 +43,8 @@ var _ = Describe("Handler", func() {
 		eventList := auditv1.EventList{
 			Items: []auditv1.Event{{AuditID: "abc123"}},
 		}
-		body, _ := json.Marshal(eventList)
+		body, err := json.Marshal(eventList)
+		Expect(err).NotTo(HaveOccurred())
 		req := httptest.NewRequest(http.MethodPost, "/audit", bytes.NewReader(body))
 		rec := httptest.NewRecorder()
 

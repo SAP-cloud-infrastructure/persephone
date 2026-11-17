@@ -13,13 +13,13 @@ import (
 const (
 	ManagerIdentity = "extension-persephone-auditlog"
 
-	CASecretName                 = "ca-persephone-auditlog"
-	ReceiverTLSSecretName        = "persephone-auditlog-receiver-tls"
-	ForwarderClientTLSSecretName = "persephone-auditlog-forwarder-client-tls"
+	CASecretName                 = "ca-persephone-auditlog"                   //nolint:gosec
+	ReceiverTLSSecretName        = "persephone-auditlog-receiver-tls"         //nolint:gosec
+	ForwarderClientTLSSecretName = "persephone-auditlog-forwarder-client-tls" //nolint:gosec
 
 	// WebhookKubeconfigSecretName is the Secret in the seed shoot namespace that contains
 	// the kubeconfig used by kube-apiserver to authenticate to the audit webhook receiver.
-	WebhookKubeconfigSecretName = "persephone-auditlog-webhook-kubeconfig"
+	WebhookKubeconfigSecretName = "persephone-auditlog-webhook-kubeconfig" //nolint:gosec
 )
 
 // SecretConfigs returns the SecretsManager configs for the auditlog extension TLS material.

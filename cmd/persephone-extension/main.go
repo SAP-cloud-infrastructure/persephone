@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/sapcc/go-api-declarations/bininfo"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	controllerruntime "sigs.k8s.io/controller-runtime"
@@ -23,7 +25,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/sap-cloud-infrastructure/persephone/cmd/persephone-extension/options"
 	"github.com/sap-cloud-infrastructure/persephone/internal/extension"
@@ -86,7 +87,7 @@ func run(ctx context.Context, logger logr.Logger, opts *options.Options) error {
 func buildGardenClient() (client.Client, error) {
 	kubeconfigPath := os.Getenv("GARDEN_KUBECONFIG")
 	if kubeconfigPath == "" {
-		return nil, fmt.Errorf("GARDEN_KUBECONFIG env var is not set; ensure the extension deployment has injectGardenKubeconfig: true")
+		return nil, errors.New("GARDEN_KUBECONFIG env var is not set; ensure the extension deployment has injectGardenKubeconfig: true")
 	}
 
 	restCfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)

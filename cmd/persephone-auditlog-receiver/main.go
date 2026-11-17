@@ -18,8 +18,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/sapcc/go-api-declarations/bininfo"
-	"k8s.io/klog/v2"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
@@ -55,13 +55,13 @@ func run(ctx context.Context, logger logr.Logger, opts *options.Options) error {
 	}
 
 	if opts.S3Endpoint == "" {
-		return fmt.Errorf("s3-endpoint must be set")
+		return errors.New("s3-endpoint must be set")
 	}
 
 	var objectLock *receiver.ObjectLockCfg
 	if opts.ObjectLockEnabled {
 		objectLock = &receiver.ObjectLockCfg{
-			RetentionDays: int32(opts.ObjectLockRetentionDays),
+			RetentionDays: int32(opts.ObjectLockRetentionDays), //nolint:gosec
 			Mode:          opts.ObjectLockMode,
 		}
 	}

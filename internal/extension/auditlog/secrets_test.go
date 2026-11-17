@@ -5,9 +5,9 @@
 package auditlog_test
 
 import (
+	secretsutils "github.com/gardener/gardener/pkg/utils/secrets"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	secretsutils "github.com/gardener/gardener/pkg/utils/secrets"
 
 	"github.com/sap-cloud-infrastructure/persephone/internal/extension/auditlog"
 )

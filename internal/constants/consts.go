@@ -39,7 +39,7 @@ const (
 	LabelKeyShootName = "persephone.sci.cloud.sap/shoot-name"
 
 	// LabelKeyEC2Credentials is a label key present on InternalSecrets that hold EC2 credentials.
-	LabelKeyEC2Credentials = "persephone.sci.cloud.sap/ec2-credentials"
+	LabelKeyEC2Credentials = "persephone.sci.cloud.sap/ec2-credentials" //nolint:gosec
 
 	// EC2AccessKey is the key in an InternalSecret's data that holds the OpenStack EC2 credential access key.
 	EC2AccessKey = "ec2AccessKey"
@@ -47,7 +47,7 @@ const (
 	EC2SecretKey = "ec2SecretKey"
 
 	// EC2CredentialsSecretName is the name of the seed-side Secret that holds the current EC2 credentials.
-	EC2CredentialsSecretName = "persephone-ec2-credentials"
+	EC2CredentialsSecretName = "persephone-ec2-credentials" //nolint:gosec
 
 	// ResourceQuotaName is the name of the ResourceQuota object managed by Persephone in each project namespace.
 	ResourceQuotaName = "shoot-clusters-quota"

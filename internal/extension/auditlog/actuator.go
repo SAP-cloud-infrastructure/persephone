@@ -17,7 +17,6 @@ import (
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
 	clientcmdv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 	"k8s.io/utils/clock"
@@ -100,16 +99,20 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 func (a *Actuator) Delete(ctx context.Context, _ logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	namespace := ex.Namespace
 
-	if err := deleteObject(ctx, a.Client, &corev1.Secret{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
-		ObjectMeta: metav1.ObjectMeta{Name: WebhookKubeconfigSecretName, Namespace: namespace},
-	}); err != nil {
+	webhookSecret := &corev1.Secret{}
+	webhookSecret.APIVersion = "v1"
+	webhookSecret.Kind = "Secret"
+	webhookSecret.Name = WebhookKubeconfigSecretName
+	webhookSecret.Namespace = namespace
+	if err := deleteObject(ctx, a.Client, webhookSecret); err != nil {
 		return fmt.Errorf("delete webhook kubeconfig secret: %w", err)
 	}
-	if err := deleteObject(ctx, a.Client, &corev1.Secret{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
-		ObjectMeta: metav1.ObjectMeta{Name: constants.EC2CredentialsSecretName, Namespace: namespace},
-	}); err != nil {
+	ec2Secret := &corev1.Secret{}
+	ec2Secret.APIVersion = "v1"
+	ec2Secret.Kind = "Secret"
+	ec2Secret.Name = constants.EC2CredentialsSecretName
+	ec2Secret.Namespace = namespace
+	if err := deleteObject(ctx, a.Client, ec2Secret); err != nil {
 		return fmt.Errorf("delete EC2 credentials secret: %w", err)
 	}
 	if err := deleteObject(ctx, a.Client, ReceiverService(namespace)); err != nil {
@@ -168,16 +171,12 @@ func (a *Actuator) syncWebhookKubeconfigToSeed(ctx context.Context, secrets map[
 		return fmt.Errorf("build webhook kubeconfig: %w", err)
 	}
 
-	desired := &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      WebhookKubeconfigSecretName,
-			Namespace: namespace,
-		},
-		Data: map[string][]byte{
-			"kubeconfig.yaml": kubeconfig,
-		},
-	}
+	desired := &corev1.Secret{}
+	desired.APIVersion = "v1"
+	desired.Kind = "Secret"
+	desired.Name = WebhookKubeconfigSecretName
+	desired.Namespace = namespace
+	desired.Data = map[string][]byte{"kubeconfig.yaml": kubeconfig}
 	return applyObject(ctx, a.Client, desired)
 }
 
@@ -207,14 +206,12 @@ func (a *Actuator) syncEC2CredentialsToSeed(ctx context.Context, log logr.Logger
 		}
 	}
 
-	desired := &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.EC2CredentialsSecretName,
-			Namespace: seedNamespace,
-		},
-		Data: newest.Data,
-	}
+	desired := &corev1.Secret{}
+	desired.APIVersion = "v1"
+	desired.Kind = "Secret"
+	desired.Name = constants.EC2CredentialsSecretName
+	desired.Namespace = seedNamespace
+	desired.Data = newest.Data
 	log.Info("Syncing EC2 credentials to seed namespace", "secret", client.ObjectKeyFromObject(desired))
 	return applyObject(ctx, a.Client, desired)
 }

@@ -7,12 +7,11 @@ package auditlog_test
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/go-logr/logr"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -34,21 +33,15 @@ var _ = Describe("Actuator.Delete", func() {
 		ctx := context.Background()
 		ns := "shoot--proj--shoot"
 
-		ex := &extensionsv1alpha1.Extension{
-			ObjectMeta: metav1.ObjectMeta{Name: "persephone-auditlog", Namespace: ns},
-		}
-		webhookSecret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      auditlog.WebhookKubeconfigSecretName,
-				Namespace: ns,
-			},
-		}
-		svc := &corev1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      auditlog.ReceiverServiceName,
-				Namespace: ns,
-			},
-		}
+		ex := &extensionsv1alpha1.Extension{}
+		ex.Name = "persephone-auditlog"
+		ex.Namespace = ns
+		webhookSecret := &corev1.Secret{}
+		webhookSecret.Name = auditlog.WebhookKubeconfigSecretName
+		webhookSecret.Namespace = ns
+		svc := &corev1.Service{}
+		svc.Name = auditlog.ReceiverServiceName
+		svc.Namespace = ns
 
 		c := fake.NewClientBuilder().
 			WithScheme(actuatorTestScheme).

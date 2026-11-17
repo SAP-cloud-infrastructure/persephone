@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"uuid"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -19,7 +20,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/go-logr/logr"
-	"github.com/google/uuid"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 )
 
@@ -92,7 +92,7 @@ func (w *S3Writer) Write(ctx context.Context, events []auditv1.Event) error {
 	now := time.Now().UTC()
 	key := fmt.Sprintf("%s%s/%s-%s.ndjson.gz",
 		w.Prefix,
-		now.Format("2006-01-02"),
+		now.Format(time.DateOnly),
 		now.Format("20060102T150405Z"),
 		uuid.New().String(),
 	)

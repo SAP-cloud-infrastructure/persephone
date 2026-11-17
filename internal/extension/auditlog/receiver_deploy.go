@@ -11,7 +11,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/ptr"
 )
 
 const (
@@ -40,61 +39,52 @@ func ReceiverDeployment(namespace, image, bucket, prefix, s3Endpoint, tlsSecretN
 		"networking.gardener.cloud/to-dns": "allowed",
 	}
 
-	return &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
-			Kind:       "Deployment",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      ReceiverServiceName,
-			Namespace: namespace,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: ptr.To(int32(1)),
-			Selector: &metav1.LabelSelector{MatchLabels: selectorLabels},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{Labels: podLabels},
-				Spec: corev1.PodSpec{
-					AutomountServiceAccountToken: ptr.To(false),
-					Containers: []corev1.Container{
-						{
-							Name:  "receiver",
-							Image: image,
-							Command: []string{"/usr/bin/persephone-auditlog-receiver"},
-							Args: receiverArgs(bucket, prefix, s3Endpoint, objectLock),
-							Ports: []corev1.ContainerPort{
-								{Name: "https", ContainerPort: receiverPort, Protocol: corev1.ProtocolTCP},
-							},
-							Env: []corev1.EnvVar{
-								envFromSecret("OS_AUTH_URL", "cloudprovider", "authURL"),
-								envFromSecret("OS_APPLICATION_CREDENTIAL_ID", "cloudprovider", "applicationCredentialID"),
-								envFromSecret("OS_APPLICATION_CREDENTIAL_SECRET", "cloudprovider", "applicationCredentialSecret"),
-								envFromSecret("OS_S3_ACCESS_KEY", "cloudprovider", "ec2AccessKey"),
-								envFromSecret("OS_S3_SECRET_KEY", "cloudprovider", "ec2SecretKey"),
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "receiver-tls",
-									MountPath: certMountPath,
-									ReadOnly:  true,
-								},
-							},
+	replicas := int32(1)
+	automount := false
+	dep := &appsv1.Deployment{}
+	dep.APIVersion = "apps/v1"
+	dep.Kind = "Deployment"
+	dep.Name = ReceiverServiceName
+	dep.Namespace = namespace
+	dep.Spec = appsv1.DeploymentSpec{
+		Replicas: &replicas,
+		Selector: &metav1.LabelSelector{MatchLabels: selectorLabels},
+		Template: corev1.PodTemplateSpec{
+			Spec: corev1.PodSpec{
+				AutomountServiceAccountToken: &automount,
+				Containers: []corev1.Container{
+					{
+						Name:    "receiver",
+						Image:   image,
+						Command: []string{"/usr/bin/persephone-auditlog-receiver"},
+						Args:    receiverArgs(bucket, prefix, s3Endpoint, objectLock),
+						Ports: []corev1.ContainerPort{
+							{Name: "https", ContainerPort: receiverPort, Protocol: corev1.ProtocolTCP},
 						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "receiver-tls",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: tlsSecretName,
-								},
+						Env: []corev1.EnvVar{
+							envFromSecret("OS_AUTH_URL", "authURL"),
+							envFromSecret("OS_APPLICATION_CREDENTIAL_ID", "applicationCredentialID"),
+							envFromSecret("OS_APPLICATION_CREDENTIAL_SECRET", "applicationCredentialSecret"),
+							envFromSecret("OS_S3_ACCESS_KEY", "ec2AccessKey"),
+							envFromSecret("OS_S3_SECRET_KEY", "ec2SecretKey"),
+						},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "receiver-tls",
+								MountPath: certMountPath,
+								ReadOnly:  true,
 							},
 						},
 					},
 				},
+				Volumes: []corev1.Volume{
+					{Name: "receiver-tls", Secret: &corev1.SecretVolumeSource{SecretName: tlsSecretName}},
+				},
 			},
 		},
 	}
+	dep.Spec.Template.Labels = podLabels
+	return dep
 }
 
 func receiverArgs(bucket, prefix, s3Endpoint string, objectLock *ObjectLockConfig) []string {
@@ -121,37 +111,30 @@ func ReceiverService(namespace string) *corev1.Service {
 		"app":  ReceiverServiceName,
 		"role": "auditlog-receiver",
 	}
-	return &corev1.Service{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Service",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      ReceiverServiceName,
-			Namespace: namespace,
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: labels,
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "https",
-					Port:       443,
-					TargetPort: intstr.FromInt32(receiverPort),
-					Protocol:   corev1.ProtocolTCP,
-				},
+	svc := &corev1.Service{}
+	svc.APIVersion = "v1"
+	svc.Kind = "Service"
+	svc.Name = ReceiverServiceName
+	svc.Namespace = namespace
+	svc.Spec = corev1.ServiceSpec{
+		Selector: labels,
+		Ports: []corev1.ServicePort{
+			{
+				Name:       "https",
+				Port:       443,
+				TargetPort: intstr.FromInt32(receiverPort),
+				Protocol:   corev1.ProtocolTCP,
 			},
 		},
 	}
+	return svc
 }
 
-func envFromSecret(envName, secretName, key string) corev1.EnvVar {
+func envFromSecret(envName, key string) corev1.EnvVar {
+	ref := &corev1.SecretKeySelector{Key: key}
+	ref.Name = "cloudprovider"
 	return corev1.EnvVar{
-		Name: envName,
-		ValueFrom: &corev1.EnvVarSource{
-			SecretKeyRef: &corev1.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{Name: secretName},
-				Key:                  key,
-			},
-		},
+		Name:      envName,
+		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: ref},
 	}
 }
