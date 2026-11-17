@@ -13,6 +13,7 @@ import (
 	gardenerutils "github.com/gardener/gardener/pkg/utils/gardener"
 	kubernetesutils "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/clock"
 	"k8s.io/utils/ptr"
@@ -22,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/sap-cloud-infrastructure/persephone/internal/constants"
+	kuberneteslocal "github.com/sap-cloud-infrastructure/persephone/internal/kubernetes"
 	openstacklocal "github.com/sap-cloud-infrastructure/persephone/internal/openstack"
 )
 
@@ -67,12 +69,25 @@ func (r *Reconciler) reconcile(ctx context.Context, log logr.Logger, shoot *gard
 		}
 	}
 
-	newestInternalSecret, err := kubernetesutils.NewestObject(ctx, r.Client, &gardenercorev1beta1.InternalSecretList{}, nil, client.InNamespace(shoot.Namespace), client.MatchingLabels{constants.LabelKeyShootName: shoot.Name})
+	newestInternalSecret, err := kubernetesutils.NewestObject(ctx, r.Client, &gardenercorev1beta1.InternalSecretList{},
+		func(obj client.Object) bool { return obj.GetDeletionTimestamp() == nil },
+		client.InNamespace(shoot.Namespace), client.MatchingLabels{constants.LabelKeyShootName: shoot.Name})
 	if err != nil {
 		return reconcile.Result{}, fmt.Errorf("failed to list InternalSecrets for Shoot %q: %w", client.ObjectKeyFromObject(shoot), err)
 	}
 
+	currentCredentialsBindingName := ptr.Deref(shoot.Spec.CredentialsBindingName, "")
+
 	if newestInternalSecret == nil {
+		// No non-deleted InternalSecret exists. If the shoot's current binding references one that is
+		// being deleted, bootstrap fresh credentials to break the deadlock. Otherwise this is a valid
+		// early state (shoot created before the first InternalSecret is issued) — leave it alone.
+		if currentCredentialsBindingName != "" && r.isInternalSecretBeingDeleted(ctx, currentCredentialsBindingName, shoot.Namespace) {
+			log.Info("Shoot references a deleted InternalSecret and no valid one exists, bootstrapping new OpenStack application credentials")
+			if err := r.ensureOpenStackInternalSecret(ctx, log, shoot); err != nil {
+				return reconcile.Result{}, fmt.Errorf("failed to bootstrap OpenStack InternalSecret for Shoot %q: %w", client.ObjectKeyFromObject(shoot), err)
+			}
+		}
 		return reconcile.Result{}, nil
 	}
 
@@ -80,13 +95,21 @@ func (r *Reconciler) reconcile(ctx context.Context, log logr.Logger, shoot *gard
 	// controller.
 	credentialsBindingName := newestInternalSecret.GetName()
 
+	currentInternalSecretIsBeingDeleted := currentCredentialsBindingName != "" &&
+		currentCredentialsBindingName != credentialsBindingName &&
+		r.isInternalSecretBeingDeleted(ctx, currentCredentialsBindingName, shoot.Namespace)
+
 	switch {
-	case ptr.Deref(shoot.Spec.CredentialsBindingName, "") == credentialsBindingName:
-		log.Info("Shoot already reference the newest InternalSecret containing OpenStack application credentials, nothing to do", "credentialsBindingName", *shoot.Spec.CredentialsBindingName)
+	case currentCredentialsBindingName == credentialsBindingName:
+		log.Info("Shoot already reference the newest InternalSecret containing OpenStack application credentials, nothing to do", "credentialsBindingName", currentCredentialsBindingName)
 		return reconcile.Result{}, nil
 
 	case shoot.Annotations[constants.AnnotationKeyForceCredentialsBindingUpdate] == "true":
 		log.Info("Shoot is marked for forceful credentials binding update")
+		return reconcile.Result{}, r.patchCredentialsBindingName(ctx, log, shoot, credentialsBindingName)
+
+	case currentInternalSecretIsBeingDeleted:
+		log.Info("Shoot references an InternalSecret that is being deleted, switching immediately", "currentCredentialsBindingName", currentCredentialsBindingName)
 		return reconcile.Result{}, r.patchCredentialsBindingName(ctx, log, shoot, credentialsBindingName)
 
 	case ptr.Deref(shoot.Spec.Maintenance.ConfineSpecUpdateRollout, false):
@@ -116,6 +139,43 @@ func (r *Reconciler) patchCredentialsBindingName(ctx context.Context, log logr.L
 	shoot.Spec.CredentialsBindingName = &credentialsBindingName
 	delete(shoot.Annotations, constants.AnnotationKeyForceCredentialsBindingUpdate)
 	return r.Client.Patch(ctx, shoot, patch)
+}
+
+func (r *Reconciler) isInternalSecretBeingDeleted(ctx context.Context, name, namespace string) bool {
+	secret := &gardenercorev1beta1.InternalSecret{}
+	if err := r.Client.Get(ctx, client.ObjectKey{Name: name, Namespace: namespace}, secret); err != nil {
+		return false
+	}
+	return secret.DeletionTimestamp != nil
+}
+
+func (r *Reconciler) ensureOpenStackInternalSecret(ctx context.Context, log logr.Logger, shoot *gardenercorev1beta1.Shoot) error {
+	namespace := &corev1.Namespace{}
+	if err := r.Client.Get(ctx, client.ObjectKey{Name: shoot.Namespace}, namespace); err != nil {
+		return fmt.Errorf("failed to get namespace %q: %w", shoot.Namespace, err)
+	}
+
+	openStackUserInfo, err := kuberneteslocal.OpenStackUserInfoFromLabels(namespace.Labels)
+	if err != nil {
+		return fmt.Errorf("failed to get OpenStack user info from namespace labels: %w", err)
+	}
+
+	openStackClientSet, ok := r.OpenStackClientSet[openStackUserInfo.Region]
+	if !ok {
+		return fmt.Errorf("region %q not supported", openStackUserInfo.Region)
+	}
+
+	clusterUserName := kuberneteslocal.GetClusterUserName(r.LandscapeName, shoot.Name, openStackUserInfo.ProjectID)
+	clusterUserClientSet, err := openstacklocal.NewClusterUserClientSet(ctx, openStackClientSet, clusterUserName, openStackUserInfo.ProjectID)
+	if err != nil {
+		return fmt.Errorf("failed to create cluster user client set: %w", err)
+	}
+
+	if _, err := kuberneteslocal.EnsureApplicationCredentialInternalSecretForShoot(ctx, log, r.Client, clusterUserClientSet, shoot, openStackUserInfo); err != nil {
+		return fmt.Errorf("failed to create OpenStack application credential: %w", err)
+	}
+
+	return nil
 }
 
 func (r *Reconciler) delete(ctx context.Context, log logr.Logger, shoot *gardenercorev1beta1.Shoot) (reconcile.Result, error) {
