@@ -175,6 +175,35 @@ func GetApplicationCredentialInternalSecretName(projectID, shootName, applicatio
 	return projectID + delimiter + shootName + delimiter + applicationCredentialName
 }
 
+// GetEC2InternalSecretName returns the name of an InternalSecret containing EC2 credentials for a Shoot.
+func GetEC2InternalSecretName(projectID, shootName string) string {
+	return projectID + delimiter + shootName + delimiter + "ec2-" + strconv.FormatInt(time.Now().UTC().Unix(), 10)
+}
+
+// EC2CredentialsInternalSecret returns a new immutable InternalSecret for EC2 credentials for a Shoot.
+// It is never referenced by a CredentialsBinding, so the OpenStack admission webhook never validates it.
+func EC2CredentialsInternalSecret(shoot *gardenercorev1beta1.Shoot, openStackUserInfo OpenStackUserInfo, accessKey, secretKey string) *gardenercorev1beta1.InternalSecret {
+	return &gardenercorev1beta1.InternalSecret{
+		Name:      GetEC2InternalSecretName(openStackUserInfo.ProjectID, shoot.Name),
+		Namespace: shoot.Namespace,
+		Labels: map[string]string{
+			constants.LabelKeyOpenStackDomainID:    openStackUserInfo.ProjectDomainID,
+			constants.LabelKeyOpenStackDomainName:  sanitizeLabelValue(openStackUserInfo.ProjectDomainName),
+			constants.LabelKeyOpenStackProjectID:   openStackUserInfo.ProjectID,
+			constants.LabelKeyOpenStackProjectName: sanitizeLabelValue(openStackUserInfo.ProjectName),
+			constants.LabelKeyOpenStackRegion:      openStackUserInfo.Region,
+			constants.LabelKeyShootName:            shoot.Name,
+			constants.LabelKeyEC2Credentials:       "true",
+		},
+		Type:      corev1.SecretTypeOpaque,
+		Immutable: new(true),
+		StringData: map[string]string{
+			constants.EC2AccessKey: accessKey,
+			constants.EC2SecretKey: secretKey,
+		},
+	}
+}
+
 // ApplicationCredentialsInternalSecret returns a new immutable Secret for application credentials for a Shoot. It is
 // annotated with the expiration timestamp of the provided application credential, and labeled with information about
 // the Shoot and the OpenStack environment.
