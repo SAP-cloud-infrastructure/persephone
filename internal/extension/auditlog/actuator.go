@@ -197,8 +197,7 @@ func (a *Actuator) syncEC2CredentialsToSeed(ctx context.Context, log logr.Logger
 	}
 
 	if len(list.Items) == 0 {
-		log.Info("No EC2 InternalSecret found for Shoot in garden, skipping sync", "shoot", shoot.Name)
-		return nil
+		return fmt.Errorf("no EC2 InternalSecret found for Shoot %q in garden yet, requeuing", shoot.Name)
 	}
 
 	newest := &list.Items[0]
