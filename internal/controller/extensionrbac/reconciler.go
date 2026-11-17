@@ -13,7 +13,6 @@ import (
 	gardenerutils "github.com/gardener/gardener/pkg/utils/gardener"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -67,7 +66,8 @@ func (r *Reconciler) reconcile(ctx context.Context, ci *gardenercorev1beta1.Cont
 	}
 
 	clusterRoleName := extensionClusterRoleName(ci.Name)
-	clusterRole := &rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: clusterRoleName}}
+	clusterRole := &rbacv1.ClusterRole{}
+	clusterRole.Name = clusterRoleName
 	if _, err := controllerutil.CreateOrPatch(ctx, r.Client, clusterRole, func() error {
 		clusterRole.Rules = []rbacv1.PolicyRule{
 			{
@@ -82,7 +82,8 @@ func (r *Reconciler) reconcile(ctx context.Context, ci *gardenercorev1beta1.Cont
 	}
 
 	clusterRoleBindingName := extensionClusterRoleName(ci.Name)
-	clusterRoleBinding := &rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: clusterRoleBindingName}}
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{}
+	clusterRoleBinding.Name = clusterRoleBindingName
 	if _, err := controllerutil.CreateOrPatch(ctx, r.Client, clusterRoleBinding, func() error {
 		clusterRoleBinding.RoleRef = rbacv1.RoleRef{
 			APIGroup: rbacv1.GroupName,
@@ -105,11 +106,15 @@ func (r *Reconciler) reconcile(ctx context.Context, ci *gardenercorev1beta1.Cont
 func (r *Reconciler) delete(ctx context.Context, ci *gardenercorev1beta1.ControllerInstallation) (reconcile.Result, error) {
 	clusterRoleName := extensionClusterRoleName(ci.Name)
 
-	if err := r.Client.Delete(ctx, &rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: clusterRoleName}}); client.IgnoreNotFound(err) != nil {
+	crb := &rbacv1.ClusterRoleBinding{}
+	crb.Name = clusterRoleName
+	if err := r.Client.Delete(ctx, crb); client.IgnoreNotFound(err) != nil {
 		return reconcile.Result{}, fmt.Errorf("failed to delete ClusterRoleBinding %q: %w", clusterRoleName, err)
 	}
 
-	if err := r.Client.Delete(ctx, &rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: clusterRoleName}}); client.IgnoreNotFound(err) != nil {
+	cr := &rbacv1.ClusterRole{}
+	cr.Name = clusterRoleName
+	if err := r.Client.Delete(ctx, cr); client.IgnoreNotFound(err) != nil {
 		return reconcile.Result{}, fmt.Errorf("failed to delete ClusterRole %q: %w", clusterRoleName, err)
 	}
 

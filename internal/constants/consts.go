@@ -44,7 +44,7 @@ const (
 	// LabelKeyEC2Credentials is a label key present on InternalSecrets that hold EC2 credentials.
 	// InternalSecrets with this label are never referenced by a CredentialsBinding, so the OpenStack
 	// admission webhook never validates them.
-	LabelKeyEC2Credentials = "persephone.sci.cloud.sap/ec2-credentials"
+	LabelKeyEC2Credentials = "persephone.sci.cloud.sap/ec2-credentials" //nolint:gosec
 
 	// EC2AccessKey is the key in an InternalSecret's data that holds the OpenStack EC2 credential access key.
 	EC2AccessKey = "ec2AccessKey"
