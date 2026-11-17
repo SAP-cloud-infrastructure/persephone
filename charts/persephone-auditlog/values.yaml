@@ -1,6 +1,6 @@
 image:
-  repository: persephone-auditlog
-  tag: latest
+  repository: keppel.eu-nl-1.cloud.sap/gardener-dev/persephone-auditlog
+  tag: 0.0.0-4d6b3ba-amd64
   pullPolicy: IfNotPresent
 
 replicaCount: 1

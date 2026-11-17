@@ -19,6 +19,7 @@ spec:
         networking.gardener.cloud/to-runtime-apiserver: allowed
         networking.gardener.cloud/to-dns: allowed
         networking.gardener.cloud/to-public-networks: allowed
+        extensions.gardener.cloud/inject-garden-kubeconfig: "true"
     spec:
       serviceAccountName: {{ include "name" . }}
       automountServiceAccountToken: true

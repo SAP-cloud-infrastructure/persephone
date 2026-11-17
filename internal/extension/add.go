@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
@@ -23,9 +24,10 @@ import (
 const extensionType = "persephone-auditlog"
 
 // AddToManager registers the persephone-auditlog extension actuator and webhook with the manager.
-func AddToManager(ctx context.Context, mgr manager.Manager, receiverImage, s3EndpointTemplate string) error {
+func AddToManager(ctx context.Context, mgr manager.Manager, gardenClient client.Client, receiverImage, s3EndpointTemplate string) error {
 	actuator := &auditlog.Actuator{
 		Client:             mgr.GetClient(),
+		GardenClient:       gardenClient,
 		ReceiverImage:      receiverImage,
 		S3EndpointTemplate: s3EndpointTemplate,
 	}

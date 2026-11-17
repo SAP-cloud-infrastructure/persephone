@@ -13,6 +13,7 @@ import (
 
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	extensionssecretsmanager "github.com/gardener/gardener/extensions/pkg/util/secret/manager"
+	gardenercorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -21,12 +22,15 @@ import (
 	clientcmdv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 	"k8s.io/utils/clock"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/sap-cloud-infrastructure/persephone/internal/constants"
 )
 
 // Actuator reconciles Extension{type:"persephone-auditlog"} objects.
 // It implements extension.Actuator from extensions/pkg/controller/extension.
 type Actuator struct {
 	Client             client.Client
+	GardenClient       client.Client
 	ReceiverImage      string
 	S3EndpointTemplate string
 }
@@ -85,6 +89,10 @@ func (a *Actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		return fmt.Errorf("sync webhook kubeconfig secret: %w", err)
 	}
 
+	if err := a.syncEC2CredentialsToSeed(ctx, log, cluster.Shoot, namespace); err != nil {
+		return fmt.Errorf("sync EC2 credentials to seed: %w", err)
+	}
+
 	return secretsManager.Cleanup(ctx)
 }
 
@@ -97,6 +105,12 @@ func (a *Actuator) Delete(ctx context.Context, _ logr.Logger, ex *extensionsv1al
 		ObjectMeta: metav1.ObjectMeta{Name: WebhookKubeconfigSecretName, Namespace: namespace},
 	}); err != nil {
 		return fmt.Errorf("delete webhook kubeconfig secret: %w", err)
+	}
+	if err := deleteObject(ctx, a.Client, &corev1.Secret{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+		ObjectMeta: metav1.ObjectMeta{Name: constants.EC2CredentialsSecretName, Namespace: namespace},
+	}); err != nil {
+		return fmt.Errorf("delete EC2 credentials secret: %w", err)
 	}
 	if err := deleteObject(ctx, a.Client, ReceiverService(namespace)); err != nil {
 		return fmt.Errorf("delete receiver Service: %w", err)
@@ -164,6 +178,45 @@ func (a *Actuator) syncWebhookKubeconfigToSeed(ctx context.Context, secrets map[
 			"kubeconfig.yaml": kubeconfig,
 		},
 	}
+	return applyObject(ctx, a.Client, desired)
+}
+
+// syncEC2CredentialsToSeed copies the newest EC2 InternalSecret from the virtual garden
+// into a regular Secret in the seed shoot namespace so the shoot workload can use it.
+func (a *Actuator) syncEC2CredentialsToSeed(ctx context.Context, log logr.Logger, shoot *gardenercorev1beta1.Shoot, seedNamespace string) error {
+	if a.GardenClient == nil {
+		return nil
+	}
+
+	list := &gardenercorev1beta1.InternalSecretList{}
+	if err := a.GardenClient.List(ctx, list,
+		client.InNamespace(shoot.Namespace),
+		client.MatchingLabels{constants.LabelKeyShootName: shoot.Name, constants.LabelKeyEC2Credentials: "true"},
+	); err != nil {
+		return fmt.Errorf("list EC2 InternalSecrets in garden: %w", err)
+	}
+
+	if len(list.Items) == 0 {
+		log.Info("No EC2 InternalSecret found for Shoot in garden, skipping sync", "shoot", shoot.Name)
+		return nil
+	}
+
+	newest := &list.Items[0]
+	for i := range list.Items {
+		if list.Items[i].CreationTimestamp.After(newest.CreationTimestamp.Time) {
+			newest = &list.Items[i]
+		}
+	}
+
+	desired := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.EC2CredentialsSecretName,
+			Namespace: seedNamespace,
+		},
+		Data: newest.Data,
+	}
+	log.Info("Syncing EC2 credentials to seed namespace", "secret", client.ObjectKeyFromObject(desired))
 	return applyObject(ctx, a.Client, desired)
 }
 

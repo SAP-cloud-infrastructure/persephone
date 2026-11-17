@@ -24,8 +24,9 @@ stringData:
         extension:
           helm:
             ociRepository:
-              ref: persephone-auditlog:0.1.0
+              ref: keppel.eu-nl-1.cloud.sap/gardener-dev/persephone-auditlog:0.0.0-4d6b3ba
           policy: OnDemand
+          injectGardenKubeconfig: true
 ---
 apiVersion: resources.gardener.cloud/v1alpha1
 kind: ManagedResource
