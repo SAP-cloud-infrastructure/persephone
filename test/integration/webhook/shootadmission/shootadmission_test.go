@@ -344,6 +344,29 @@ var _ = Describe("ShootAdmission tests", func() {
 			Expect(workerlessShoot.Spec.CredentialsBindingName).To(BeNil())
 		})
 	})
+
+	When("creating a Shoot with server-side dry-run", Ordered, func() {
+		It("should succeed without creating an InternalSecret or CredentialsBinding", func() {
+			DeferCleanup(test.WithVar(&shootadmission.NewClusterUserClientSet, func(_ context.Context, adminClient *openstack.ClientSet, username, projectID string) (*openstack.ClusterUserClientSet, error) {
+				return &openstack.ClusterUserClientSet{
+					User:           &users.User{ID: "fake-user-id"},
+					IdentityClient: newFakeIdentityClient(),
+					NetworkClient:  newFakeNetworkClient(1),
+				}, nil
+			}))
+
+			openStackUserClient := newOpenStackUserClient(supportedRegion)
+			Expect(openStackUserClient.Create(ctx, shoot, client.DryRunAll)).To(Succeed())
+
+			internalSecretList := &gardenercorev1beta1.InternalSecretList{}
+			Expect(testClient.List(ctx, internalSecretList, client.InNamespace(shoot.Namespace), client.MatchingLabels{"persephone.sci.cloud.sap/shoot-name": shoot.Name})).To(Succeed())
+			Expect(internalSecretList.Items).To(BeEmpty())
+
+			credentialsBindingList := &gardenersecurityv1alpha1.CredentialsBindingList{}
+			Expect(testClient.List(ctx, credentialsBindingList, client.InNamespace(shoot.Namespace))).To(Succeed())
+			Expect(credentialsBindingList.Items).To(BeEmpty())
+		})
+	})
 })
 
 func newOpenStackUserClient(region string) client.Client {
