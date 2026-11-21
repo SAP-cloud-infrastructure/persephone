@@ -7,9 +7,9 @@ require (
 	github.com/adrg/xdg v0.5.3
 	github.com/gardener/gardener v1.155.0 // this points to v1.135.2 which is not yet released
 	github.com/gardener/gardener-extension-provider-openstack v1.59.1
-	github.com/gardener/gardener/pkg/apis v1.155.1
+	github.com/gardener/gardener/pkg/apis v1.155.2
 	github.com/go-logr/logr v1.4.4
-	github.com/gophercloud/gophercloud/v2 v2.15.0
+	github.com/gophercloud/gophercloud/v2 v2.16.0
 	github.com/gorilla/mux v1.8.1
 	github.com/onsi/ginkgo/v2 v2.34.0
 	github.com/onsi/gomega v1.44.0
@@ -27,7 +27,7 @@ require (
 	k8s.io/component-base v0.37.2
 	k8s.io/klog/v2 v2.140.0
 	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab
-	sigs.k8s.io/controller-runtime v0.25.2
+	sigs.k8s.io/controller-runtime v0.25.3
 	sigs.k8s.io/yaml v1.6.0
 )
 
